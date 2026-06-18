@@ -1,0 +1,18 @@
+# web(Next.js) 이미지 빌드용 무시 목록. 루트 .dockerignore 가 web 을 제외하므로 별도 파일로 둔다.
+**/node_modules
+web/.next
+web/out
+**/*.tsbuildinfo
+.venv
+**/__pycache__
+*.pyc
+.git
+.idea
+.cadence
+.claude
+output
+.env
+.env.bak
+app
+README.md
+안다르_제안서_리터니즈_260616.html

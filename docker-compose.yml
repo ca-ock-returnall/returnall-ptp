@@ -1,0 +1,87 @@
+# ptp.returneeds.com — nginx-proxy + Let's Encrypt 자동 SSL (통합 프런트)
+#
+# 서버 사전 상태
+#   - DNS A: ptp.returneeds.com → 34.64.48.31 (서버 공인 IP)
+#   - 80/443 인바운드 허용
+#   - 외부 네트워크 webproxy 존재:  docker network create webproxy
+#   - 기존 biz-app 은 webproxy 에 합류시켜 기본(default) vhost 로 둔다 (biz-deploy 참고)
+#
+# 실행:  docker compose up -d --build
+# 인증서 확인:  docker compose logs -f acme-companion
+
+services:
+  # 단일 관문: VIRTUAL_HOST 라벨이 붙은 컨테이너를 자동 라우팅 (80/443)
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy:latest
+    container_name: nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # VIRTUAL_HOST 매칭이 안 되는 요청(IP 직접·기타 도메인)은 biz-app 으로
+      - DEFAULT_HOST=biz.local
+    volumes:
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      # SSE(text/event-stream) 실시간 진행을 위한 per-vhost 버퍼링 끄기
+      - ./nginx/ptp.returneeds.com_location:/etc/nginx/vhost.d/ptp.returneeds.com_location:ro
+    labels:
+      # acme-companion 이 이 컨테이너를 nginx-proxy 로 식별
+      - "com.github.nginx-proxy.nginx"
+    networks:
+      - webproxy
+
+  # Let's Encrypt 인증서 자동 발급/갱신
+  acme-companion:
+    image: nginxproxy/acme-companion:latest
+    container_name: acme-companion
+    restart: unless-stopped
+    environment:
+      - DEFAULT_EMAIL=dev@ptp.returneeds.com
+      - NGINX_PROXY_CONTAINER=nginx-proxy
+    volumes:
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - nginx-proxy
+    networks:
+      - webproxy
+
+  # 제안서 자동 생성 웹서비스 (Next.js, web/)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    image: ptp-web:latest
+    container_name: ptp-app
+    restart: unless-stopped
+    expose:
+      - "8000"
+    environment:
+      - VIRTUAL_HOST=ptp.returneeds.com
+      - VIRTUAL_PORT=8000
+      - LETSENCRYPT_HOST=ptp.returneeds.com
+      - LETSENCRYPT_EMAIL=dev@ptp.returneeds.com
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - PROPOSAL_MODEL=${PROPOSAL_MODEL:-claude-opus-4-8}
+      - PROPOSAL_EFFORT=${PROPOSAL_EFFORT:-low}
+    depends_on:
+      - nginx-proxy
+    networks:
+      - webproxy
+
+volumes:
+  certs:
+  vhost:
+  html:
+  acme:
+
+networks:
+  webproxy:
+    external: true

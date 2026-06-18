@@ -1,0 +1,955 @@
+<!--
+  리터니즈 제안서 템플릿 (proposal-template.html)
+  STAGE 4가 이 파일을 복사해 채운다. 채우는 법은 pipeline/stage4_assemble.md 참조.
+
+  [전역 토큰]  {{COMPANY}} 회사명 · {{COMPANY_EN}} 로고용 영문 · {{PLATFORM}} 커머스 플랫폼
+               {{PROPOSAL_TITLE}} 표지 제목 · {{SRC_FOOT}} 슬라이드3 출처 한 줄
+  [GEN 블록]   <!-- ▼ GEN:xxx --> ~ <!-- ▲ GEN:xxx --> 사이만 회사 분석으로 채움.
+               hero · core3cards · style_sku · platform · kpi · roadmap · checklist
+  [LIB 블록]   마커 밖 슬라이드(역량·서비스 소개서·보안)는 회사명 토큰 외 수정 금지.
+  [고정 수치]  CAPA 6,000건/일·여유 4,500건/일·48시간·99.99% 등은 리터니즈 고정값 — 변경 금지.
+-->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{PROPOSAL_TITLE}} · 리터니즈</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root{
+    --green:#18883B;       /* returneeds green */
+    --green-d:#0f6e2e;
+    --green-l:#e9f5ec;
+    --orange:#F26F21;
+    --orange-l:#fdeee3;
+    --amber:#F0A830;
+    --ink:#222629;
+    --ink-2:#4b5158;
+    --gray:#6b7280;
+    --card:#f1f2f3;
+    --line:#d7dadd;
+    --white:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{
+    background:#54585c;
+    font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Segoe UI",sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  .deck{display:flex;flex-direction:column;align-items:center;gap:22px;padding:28px 0 60px;}
+  .slide{
+    position:relative;
+    width:1280px;height:720px;
+    background:var(--white);
+    overflow:hidden;
+    box-shadow:0 6px 26px rgba(0,0,0,.35);
+    flex:0 0 auto;
+  }
+  /* ---------- shared slide chrome ---------- */
+  .pad{padding:54px 64px;}
+  .head{display:flex;gap:30px;align-items:flex-start;}
+  .head .title{flex:0 0 360px;}
+  .head h2{font-size:33px;font-weight:800;line-height:1.28;letter-spacing:-.5px;color:var(--ink);}
+  .head h2.g{color:var(--green);}
+  .title .rule{width:120px;height:5px;background:var(--ink);margin-bottom:18px;border-radius:2px;}
+  .head .lead{flex:1;padding-top:6px;border-top:1px solid var(--line);}
+  .head .lead p{font-size:17px;line-height:1.6;color:var(--ink-2);padding-top:14px;}
+  .head .lead p+p{padding-top:2px;}
+  b.g{color:var(--green);} b.o{color:var(--orange);}
+  .body{position:absolute;left:0;right:0;bottom:0;top:228px;}
+  .stage{position:absolute;left:64px;right:64px;top:0;bottom:46px;background:var(--card);border-radius:6px;}
+  .pageno{position:absolute;right:30px;bottom:16px;font-size:12px;color:#9aa0a6;}
+  .ftbar{position:absolute;left:64px;right:64px;bottom:30px;border-top:1px solid #e3e5e7;}
+  .ftname{position:absolute;left:64px;bottom:14px;font-size:13px;color:#b4b9be;font-weight:700;}
+
+  /* ---------- cover / dividers ---------- */
+  .cover{background:var(--green);color:#fff;}
+  .cover .ct{position:absolute;top:0;left:0;right:0;height:82%;display:flex;align-items:center;justify-content:center;text-align:center;}
+  .cover .ct h1{font-size:40px;font-weight:800;line-height:1.4;letter-spacing:-.5px;}
+  .cover .logos{position:absolute;bottom:60px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:46px;}
+  .logo-andar{font-size:46px;font-weight:300;letter-spacing:1px;color:#1c1c1c;font-family:"Segoe UI",sans-serif;}
+  .logo-x{color:#1c1c1c;font-size:18px;}
+  .logo-rn{font-style:italic;font-weight:800;font-size:34px;color:#1c1c1c;font-family:"Georgia",serif;}
+  .cover .logos .chip{background:#fff;border-radius:10px;padding:20px 40px;display:flex;align-items:center;}
+
+  .divider{background:linear-gradient(135deg,#1c7d3c 0%, #29a14d 55%, #0f6e2e 100%);color:#fff;}
+  .divider:before{content:"";position:absolute;inset:0;background:
+     repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0 2px,transparent 2px 60px);}
+  .divider .dt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+  .divider h2{font-size:38px;font-weight:800;letter-spacing:.5px;}
+  .divider .kr{font-size:30px;}
+  .divider .num{position:absolute;top:120px;left:64px;font-size:30px;font-weight:800;}
+
+  /* ---------- generic cards / grids ---------- */
+  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px;padding:30px;height:100%;}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:30px;height:100%;}
+  .card{background:#fff;border-radius:10px;padding:24px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;flex-direction:column;}
+  .card .tag{font-size:13px;font-weight:800;letter-spacing:.3px;margin-bottom:6px;}
+  .card h3{font-size:21px;font-weight:800;line-height:1.32;margin-bottom:14px;letter-spacing:-.4px;}
+  .card .top{height:5px;border-radius:3px;margin-bottom:16px;width:100%;}
+  .card ul{list-style:none;}
+  .card li{font-size:15px;line-height:1.62;color:var(--ink-2);padding-left:20px;position:relative;margin-bottom:7px;}
+  .card li:before{content:"✔";position:absolute;left:0;color:var(--green);font-size:12px;top:3px;}
+  .card .foot{margin-top:auto;padding-top:14px;}
+  .pill{display:inline-block;background:#eceff1;color:#566;border-radius:14px;padding:5px 14px;font-size:12px;font-weight:700;}
+  .pill.g{background:var(--green-l);color:var(--green-d);}
+  .pill.o{background:var(--orange-l);color:#c4561a;}
+
+  /* big stat rows */
+  .stat-wrap{display:flex;flex-direction:column;justify-content:center;gap:46px;height:100%;padding:34px 40px;}
+  .stat-row{display:flex;align-items:center;gap:34px;}
+  .stat-num{font-size:96px;font-weight:800;line-height:.9;letter-spacing:-3px;flex:0 0 300px;text-align:right;}
+  .stat-num small{font-size:34px;font-weight:800;}
+  .stat-num.g{color:var(--green);} .stat-num.o{color:var(--orange);}
+  .stat-info{border-left:0;padding-left:8px;position:relative;}
+  .stat-info:before{content:"";position:absolute;left:-18px;top:6px;width:30px;height:3px;}
+  .stat-info.g:before{background:var(--green);} .stat-info.o:before{background:var(--orange);}
+  .stat-info h4{font-size:17px;font-weight:800;margin-bottom:10px;}
+  .stat-info.g h4{color:var(--green);} .stat-info.o h4{color:var(--orange);}
+  .stat-info li{font-size:14.5px;line-height:1.55;color:var(--ink-2);list-style:none;padding-left:14px;position:relative;margin-bottom:5px;}
+  .stat-info li:before{content:"•";position:absolute;left:0;color:#9aa0a6;}
+
+  /* tables */
+  table.tbl{width:100%;border-collapse:collapse;font-size:14.5px;}
+  table.tbl th{background:var(--green);color:#fff;font-weight:700;padding:13px 12px;text-align:center;}
+  table.tbl th.alt{background:var(--green-d);}
+  table.tbl td{padding:12px 12px;text-align:center;border-bottom:1px solid #e3e5e7;color:var(--ink-2);}
+  table.tbl tr:nth-child(even) td{background:#fafbfb;}
+  table.tbl td.lab{font-weight:700;color:var(--ink);background:#f4f6f6;}
+  .o-em{color:var(--orange);font-weight:700;} .g-em{color:var(--green);font-weight:700;}
+
+  /* step process */
+  .steps{display:flex;align-items:stretch;gap:10px;padding:28px 26px 0;}
+  .step{flex:1;background:#fff;border-radius:9px;padding:16px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06);position:relative;}
+  .step .bar{height:4px;border-radius:3px;margin:-16px -14px 12px;border-top-left-radius:9px;border-top-right-radius:9px;}
+  .step .no{font-size:11px;font-weight:800;color:#566;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .step .no .r{font-weight:600;color:#9aa0a6;}
+  .step h4{font-size:16px;font-weight:800;margin-bottom:8px;}
+  .step p{font-size:12.5px;line-height:1.5;color:var(--ink-2);}
+  .step .hl{margin-top:10px;font-size:12px;font-weight:800;}
+  .arrow{align-self:center;color:#c4c8cc;font-size:20px;font-weight:800;}
+
+  .miniftr{display:flex;gap:22px;padding:18px 30px 24px;}
+  .miniftr .mt{flex:1;}
+  .miniftr table{width:100%;border-collapse:collapse;font-size:13px;}
+  .miniftr th{background:#e7eaec;color:#3a3f44;padding:8px;text-align:left;font-weight:700;}
+  .miniftr td{padding:8px;border-bottom:1px solid #e3e5e7;color:var(--ink-2);}
+
+  .flow{display:flex;align-items:center;justify-content:center;gap:0;padding:30px 26px 8px;}
+  .fbox{background:#fff;border:2px solid #d7dadd;border-radius:10px;padding:16px 20px;font-weight:800;font-size:17px;text-align:center;min-width:120px;}
+  .fbox.y{border-color:var(--amber);} .fbox.o{border-color:var(--orange);color:var(--orange);}
+  .fbox.g{border-color:var(--green);color:var(--green);} .fbox.gf{background:var(--green);color:#fff;border-color:var(--green);}
+  .farr{color:#c4c8cc;font-size:22px;padding:0 14px;}
+  .flow-desc{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;padding:6px 30px 24px;}
+  .flow-desc .fd{background:#fff;border-radius:9px;padding:16px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .flow-desc .fd b{display:block;font-size:15px;margin-bottom:6px;}
+  .flow-desc .fd b:before{content:"";display:inline-block;width:8px;height:14px;background:var(--green);border-radius:2px;margin-right:7px;vertical-align:-2px;}
+  .flow-desc .fd span{font-size:13px;color:var(--ink-2);line-height:1.5;}
+
+  /* two-col info blocks bottom */
+  .infocols{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:22px 30px;}
+  .infocol h5{font-size:11px;font-weight:800;color:#9aa0a6;letter-spacing:1px;margin-bottom:4px;}
+  .infocol h4{font-size:18px;font-weight:800;margin-bottom:12px;}
+  .infocol li{font-size:14px;line-height:1.62;color:var(--ink-2);list-style:none;padding-left:18px;position:relative;margin-bottom:5px;}
+  .infocol li:before{content:"✔";position:absolute;left:0;color:var(--green);font-size:11px;top:3px;}
+
+  /* capa bars */
+  .capa{display:grid;grid-template-columns:1.5fr 1fr;gap:22px;padding:30px;height:100%;}
+  .capa .panel{background:#fff;border-radius:10px;padding:26px 28px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .capa .panel h4{font-size:18px;font-weight:800;margin-bottom:26px;padding-left:12px;border-left:5px solid var(--green);}
+  .barrow{margin-bottom:24px;}
+  .barrow .bl{display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-bottom:8px;}
+  .barrow .track{height:18px;background:#e7eaec;border-radius:10px;overflow:hidden;}
+  .barrow .fill{height:100%;border-radius:10px;}
+  .barrow .sub{font-size:11px;color:#9aa0a6;margin-top:5px;}
+  .capa .side{display:flex;flex-direction:column;gap:18px;}
+  .sidebox{border-radius:10px;padding:22px 24px;}
+  .sidebox.green{background:var(--green);color:#fff;}
+  .sidebox.lgreen{background:var(--green-l);color:var(--green-d);}
+  .sidebox h6{font-size:11px;font-weight:800;letter-spacing:.6px;opacity:.85;margin-bottom:6px;}
+  .sidebox .bignum{font-size:54px;font-weight:800;text-align:right;line-height:1;}
+  .sidebox .bignum small{font-size:20px;}
+  .sidebox p{font-size:14px;margin-top:4px;}
+  .sidebox .x{font-size:46px;font-weight:800;color:var(--orange);text-align:right;}
+
+  /* decision maker grid */
+  .dm-tbl td.msg{text-align:left;color:var(--ink);}
+  .quote{position:absolute;right:48px;bottom:90px;text-align:right;}
+  .quote p{font-size:15px;font-weight:700;color:var(--ink);}
+  .quote span{font-size:13px;color:var(--gray);}
+
+  /* roadmap */
+  .road{padding:26px 30px;}
+  .road-top{display:flex;gap:14px;margin-bottom:24px;}
+  .road-top .rt{flex:1;background:#fff;border-radius:30px;padding:16px 22px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .road-top .rt b{font-size:16px;font-weight:800;}
+  .road-top .rt b.g{color:var(--green);}
+  .road-top .rt span{display:block;font-size:12.5px;color:var(--ink-2);margin-top:4px;line-height:1.45;}
+  .gantt{display:grid;grid-template-columns:120px repeat(8,1fr);align-items:center;row-gap:12px;}
+  .gantt .wk{text-align:center;font-size:13px;color:#7a8088;font-weight:700;}
+  .gantt .glab{font-size:14px;font-weight:700;}
+  .gbar{height:30px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12.5px;font-weight:700;}
+  .gantt .scale{grid-column:2 / span 8;background:var(--green-l);border-radius:16px;height:30px;display:grid;grid-template-columns:repeat(8,1fr);align-items:center;}
+  .gantt .scale span{text-align:center;font-size:12px;color:#5a6168;font-weight:700;}
+
+  /* checklist */
+  .checks{display:flex;flex-direction:column;gap:16px;padding:30px 80px;justify-content:center;height:100%;}
+  .chk{display:flex;align-items:center;gap:20px;background:#fff;border-radius:30px;padding:16px 28px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .chk .ic{flex:0 0 30px;height:30px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .chk b{font-size:18px;font-weight:800;flex:0 0 220px;}
+  .chk span{font-size:14.5px;color:var(--ink-2);}
+
+  /* pain bubbles */
+  .pains{display:grid;grid-template-columns:1fr 1fr 1fr;gap:30px;padding:46px 40px;height:100%;align-items:center;}
+  .pain{text-align:center;}
+  .bubble{background:#fff;border:2px solid var(--green);border-radius:16px;padding:18px;font-size:16px;font-weight:800;line-height:1.45;position:relative;margin-bottom:30px;min-height:120px;display:flex;align-items:center;justify-content:center;}
+  .bubble:after{content:"";position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);border-width:14px 12px 0;border-style:solid;border-color:var(--green) transparent transparent;}
+  .bubble:before{content:"";position:absolute;bottom:-11px;left:50%;transform:translateX(-50%);border-width:12px 10px 0;border-style:solid;border-color:#fff transparent transparent;z-index:1;}
+  .emoji{font-size:46px;margin:10px 0;}
+  .pain .badge{background:var(--green);color:#fff;border-radius:8px;padding:11px 16px;font-size:17px;font-weight:800;display:inline-block;}
+
+  /* before after */
+  .ba{display:grid;grid-template-rows:1fr 1fr;height:100%;}
+  .ba .row{display:grid;grid-template-columns:130px 1fr 1fr 1fr;align-items:center;padding:0 30px;gap:18px;}
+  .ba .before{background:#33373b;color:#fff;}
+  .ba .after{background:#eef1f3;}
+  .ba .rl{font-size:24px;font-weight:800;}
+  .ba .rl small{display:block;font-size:12px;font-weight:600;opacity:.8;margin-top:4px;}
+  .ba .after .rl{color:var(--green);}
+  .ba .cell{font-size:14px;line-height:1.5;text-align:center;padding:14px 8px;}
+  .ba .cell .em{display:block;font-size:18px;}
+
+  /* clients logos */
+  .clients{display:grid;grid-template-columns:repeat(7,1fr);gap:14px;padding:36px 30px;align-content:center;height:100%;}
+  .clogo{border:1.5px dashed #c7cbcf;border-radius:8px;padding:18px 8px;text-align:center;background:#fff;}
+  .clogo b{display:block;font-size:14px;font-weight:800;letter-spacing:.5px;}
+  .clogo span{font-size:12px;color:var(--gray);}
+
+  /* security / news split */
+  .split{display:grid;grid-template-columns:1.1fr .9fr;gap:26px;padding:30px;height:100%;}
+  .news .ntag,.sec .stag{display:inline-block;background:var(--green);color:#fff;font-size:12px;font-weight:800;border-radius:6px;padding:5px 14px;margin-bottom:16px;}
+  .newsitem{background:#fff;border-radius:8px;padding:14px 18px;box-shadow:2px 3px 0 rgba(0,0,0,.06);margin-bottom:14px;border-left:4px solid var(--green);}
+  .newsitem .src{font-size:11px;color:var(--gray);}
+  .newsitem b{font-size:15px;}
+  .secitem{display:flex;align-items:center;gap:14px;border:1.5px dashed var(--green);border-radius:30px;padding:14px 22px;margin-bottom:14px;background:#fff;}
+  .secitem .n{flex:0 0 28px;height:28px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;}
+  .secitem b{font-size:15px;font-weight:800;}
+
+  /* closing */
+  .closing{background:var(--green);color:#fff;}
+  .closing .cc{position:absolute;top:90px;left:64px;}
+  .closing h2{font-size:34px;font-weight:800;line-height:1.45;}
+  .closing .contact{position:absolute;top:280px;left:64px;font-size:16px;line-height:2.1;}
+  .closing .contact b{display:inline-block;width:90px;font-weight:800;}
+  .closing .rn{position:absolute;right:64px;bottom:50px;font-style:italic;font-weight:800;font-size:30px;}
+
+  .note{font-size:12px;color:#9aa0a6;padding:0 30px 16px;}
+  .srcfoot{position:absolute;left:64px;right:64px;bottom:18px;font-size:11px;color:#aeb3b8;border-top:1px solid #eceef0;padding-top:8px;}
+
+  @media print{
+    @page{size:1280px 720px;margin:0;}
+    html,body{background:#fff;}
+    .deck{gap:0;padding:0;}
+    .slide{box-shadow:none;page-break-after:always;break-after:page;}
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- 1. COVER -->
+  <section class="slide cover">
+    <div class="ct"><h1>{{PROPOSAL_TITLE}}</h1></div>
+    <div class="logos">
+      <div class="chip"><span class="logo-andar">{{COMPANY_EN}}</span></div>
+      <span class="logo-x">×</span>
+      <div class="chip"><span class="logo-rn">returneeds</span></div>
+    </div>
+  </section>
+
+  <!-- 2. DIVIDER: EXEC SUMMARY -->
+  <section class="slide divider">
+    <div class="dt"><h2>EXECUTIVE SUMMARY</h2></div>
+  </section>
+
+  <!-- 3. 제안 핵심 메시지 -->
+  <section class="slide">
+    <!-- ▼ GEN:hero — STORYLINE SPEC: HERO_HEADLINE / HERO_LEAD. headline은 <br> 포함 가능 -->
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">{{HERO_HEADLINE}}</h2></div>
+      <div class="lead">
+        <p>{{HERO_LEAD}}</p>
+      </div>
+    </div>
+    <!-- ▲ GEN:hero -->
+    <!-- ▼ GEN:core3cards — 3카드(고객 구조 / 핵심 과제 / 제안 방향). 각 카드 tag·title·bullet3·pill을 SPEC의 CARD_* 값으로 채움. 색/구조 고정 -->
+    <div class="body"><div class="stage">
+      <div class="g3">
+        <div class="card">
+          <div class="top" style="background:var(--green)"></div>
+          <div class="tag g-em">{{CARD1_TAG}}</div>
+          <h3>{{CARD1_TITLE}}</h3>
+          <ul>
+            <li>{{CARD1_B1}}</li>
+            <li>{{CARD1_B2}}</li>
+            <li>{{CARD1_B3}}</li>
+          </ul>
+          <div class="foot"><span class="pill g">{{CARD1_PILL}}</span></div>
+        </div>
+        <div class="card">
+          <div class="top" style="background:var(--orange)"></div>
+          <div class="tag o-em">{{CARD2_TAG}}</div>
+          <h3>{{CARD2_TITLE}}</h3>
+          <ul>
+            <li>{{CARD2_B1}}</li>
+            <li>{{CARD2_B2}}</li>
+            <li>{{CARD2_B3}}</li>
+          </ul>
+          <div class="foot"><span class="pill o">{{CARD2_PILL}}</span></div>
+        </div>
+        <div class="card">
+          <div class="top" style="background:#33373b"></div>
+          <div class="tag" style="color:#33373b">{{CARD3_TAG}}</div>
+          <h3>{{CARD3_TITLE}}</h3>
+          <ul>
+            <li>{{CARD3_B1}}</li>
+            <li>{{CARD3_B2}}</li>
+            <li>{{CARD3_B3}}</li>
+          </ul>
+          <div class="foot"><span class="pill">{{CARD3_PILL}}</span></div>
+        </div>
+      </div>
+    </div></div>
+    <!-- ▲ GEN:core3cards -->
+    <div class="srcfoot">{{SRC_FOOT}}</div>
+  </section>
+
+  <!-- 4. 반품 처리 속도와 정확성 -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">반품 처리 속도와<br>정확성</h2></div>
+      <div class="lead">
+        <p>리터니즈는 {{PLATFORM}}를 포함한 각 커머스 플랫폼의 반품 접수 이후 전 운영 단계를 위탁 수행합니다.</p>
+        <p>입고 스캔, 검수 및 고화질 사진 촬영, {{COMPANY}} 기준에 맞춘 정밀 양품화, 신속한 재고 반환까지 원스톱으로 제어하여
+        <b>복잡했던 물류 병목을 구조적으로 해결</b>하고 <b>반품 리드타임을 개선</b>합니다.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage">
+      <div class="stat-wrap">
+        <div class="stat-row">
+          <div class="stat-num g">48<small>시간</small></div>
+          <div class="stat-info g">
+            <h4>검수 완료 리드타임</h4>
+            <ul>
+              <li>입고 후 검품을 완료하고 정보가 포털에 업데이트되기까지 걸리는 시간. <b>환불 판단·CS 응대·재고 반송 스케줄</b>의 선행 동기화 지표입니다.</li>
+              <li>{{COMPANY}} CS팀은 리터니즈 웹 포털에서 실시간 이미지를 즉각 조회하여 고객 민원에 당일 대응할 수 있습니다.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-num o">99<small>.99%</small></div>
+          <div class="stat-info o">
+            <h4>검수 사진·상태정보 정확도</h4>
+            <ul>
+              <li>검품 완료 건 중 고화질 훼손 부위 이미지와 판정 코멘트가 정상 제공된 비율. <b>고객 변심·귀책 분쟁 및 재검 요청 시 근거로 제시할 신뢰성 척도</b>입니다.</li>
+              <li>숙련 검품원과 AI 보조 탐지로 미세 훼손까지 잡고, 재검품 요청으로 누락 가능성을 배제합니다.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="ftbar"></div><div class="ftname">리터니즈</div><div class="pageno">01</div>
+  </section>
+
+  <!-- 5. 재고 복원 3 cards -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">재고 완벽 복원으로<br>재고유동성 극대화</h2></div>
+      <div class="lead">
+        <p>반품 접수 이후 물리적 운영 단계를 표준화하여, <b>CS 대응 속도 단축과 즉각적인 재고 가용화</b>를 달성합니다.</p>
+        <p>{{COMPANY}} 내부 KPI(환불율·재고 회전·재구매율)와 바로 연결되는 세 가지 가치를 제공합니다.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage">
+      <div class="g3">
+        <div class="card">
+          <div class="top" style="background:var(--green)"></div>
+          <div class="tag g-em">B2C 반품 품질 안정화</div>
+          <h3>{{COMPANY}} 전용 검품원의<br>검수·양품화 표준화</h3>
+          <ul>
+            <li>입고 상품별 정밀 분류 및 개봉 검수</li>
+            <li>{{COMPANY}} 전용 고화질 검품 사진 촬영</li>
+            <li>표준 양품화(오염 세척·실밥 처리) 및 재포장</li>
+          </ul>
+          <div class="foot"><span class="pill g">운영 안정화</span></div>
+        </div>
+        <div class="card">
+          <div class="top" style="background:var(--orange)"></div>
+          <div class="tag o-em">CS 조회 고도화</div>
+          <h3>리터니즈 포털을 통한<br>실시간 상태 정보 공유</h3>
+          <ul>
+            <li>검수 결과 및 훼손 위치 상세 클로즈업 샷</li>
+            <li>고객 귀책 및 상품 불량 판정 코멘트 제공</li>
+            <li>CS팀이 실시간 조회 후 당일 환불 안내 연계</li>
+          </ul>
+          <div class="foot"><span class="pill o">CS 활용 고도화</span></div>
+        </div>
+        <div class="card">
+          <div class="top" style="background:#33373b"></div>
+          <div class="tag" style="color:#33373b">품질 데이터 리포트</div>
+          <h3>Style/SKU 분석 기반<br>반품 요인 데이터 제공</h3>
+          <ul>
+            <li>SKU별 반품 사유 패턴화 리포트</li>
+            <li>양품화율 분석으로 디자인/봉제 취약 지점 발견</li>
+            <li>악성 반복 불량 원인 규명 및 상품기획·CRM 피드백</li>
+          </ul>
+          <div class="foot"><span class="pill">품질 데이터 분석</span></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="ftbar"></div><div class="ftname">리터니즈</div><div class="pageno">02</div>
+  </section>
+
+  <!-- 6. DIVIDER: 문의 답변 -->
+  <section class="slide divider">
+    <div class="dt"><h2 class="kr">{{COMPANY}} 확인 요청사항에 대한 답변</h2></div>
+  </section>
+
+  <!-- 7. 운영 역량 - 처리물량 (CAPA) -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">운영 역량<br>– 처리 물량 (CAPA)</h2></div>
+      <div class="lead">
+        <p>평시 여유 검수 캐파 <b class="o">4,500건/일</b>로 성수기·프로모션 직후 대량 반품까지 즉각 수용할 수 있습니다.</p>
+        <p>{{COMPANY}}가 요청한 <b>일일 처리 가능 물량과 성수기 대응 규모</b>를 평균 CAPA와 피크 CAPA로 분리해 제시합니다.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage">
+      <div class="capa">
+        <div class="panel">
+          <h4>일반검품 일일 CAPA 및 여유 물량 비교</h4>
+          <div class="barrow">
+            <div class="bl"><span>센터 총 CAPA (일일)</span><span class="g-em">6,000 건/일</span></div>
+            <div class="track"><div class="fill" style="width:100%;background:var(--green)"></div></div>
+          </div>
+          <div class="barrow">
+            <div class="bl"><span>현재 가동율 25% / 잔여 여유 75%</span><span class="o-em">여유 4,500 건/일</span></div>
+            <div class="track"><div class="fill" style="width:25%;background:#9aa0a6"></div></div>
+            <div class="sub">현재 가동 (1,500건)</div>
+          </div>
+          <div class="barrow">
+            <div class="bl"><span>적치재고 집중 검품 CAPA</span><span>평시 1,500 · 집중 3,000 건/일</span></div>
+            <div class="track"><div class="fill" style="width:50%;background:#33373b"></div></div>
+            <div class="sub">집중 대응 기간 최대 3,000 건/일</div>
+          </div>
+        </div>
+        <div class="side">
+          <div class="sidebox green">
+            <h6>DAILY FREE CAPACITY</h6>
+            <p>{{COMPANY}} 물량 수용 즉시 가동 가능한 여유 캐파</p>
+            <div class="bignum">4,500 <small>건/일</small></div>
+          </div>
+          <div class="sidebox lgreen">
+            <h6>PEAK SEASON READINESS</h6>
+            <p>성수기/프로모션 집중 대응 확장 볼륨</p>
+            <div class="x">최대 1.5×</div>
+            <p style="text-align:right;font-size:12px;color:var(--orange)">예약 CAPA · 임시 라인 · 우선순위 룰 적용</p>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="ftbar"></div><div class="ftname">리터니즈</div><div class="pageno">03</div>
+  </section>
+
+  <!-- 8. 운영 역량 - 운영 방식 -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">운영 역량<br>– 운영 방식</h2></div>
+      <div class="lead">
+        <p><b>검수/검품:</b> 사진 촬영, 구성품 확인, 포장 상태 확인, 개봉 후 오염/불량 확인, 정상/불량 판정 결과 기록</p>
+        <p><b>양품화/재포장:</b> 표준 양품화(먼지·머리카락 제거, 실밥 정리, 경미 오염 닦기, 재접기/폴딩, 폴리백 포장) +
+        부가 서비스(택/라벨 부착, 습자지·박스 교체, 구김펴기 스팀). <b class="g">{{COMPANY}} 기준에 맞춰 정상 판매 가능 상태로 복원</b>하며 작업 항목·부자재는 사전 협의합니다.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage">
+      <div class="g3" style="grid-template-columns:1fr 1fr 1fr;">
+        <div class="card">
+          <div class="tag g-em">01 · 정밀 검품 스펙 <span class="pill g" style="margin-left:6px">입고 즉시 진행</span></div>
+          <ul style="margin-top:10px">
+            <li><b>사진 촬영 기록</b> — 고화질 3면 촬영, 주요 오염·파손 집중 기록</li>
+            <li><b>구성품 확인</b> — 세트 구성품·사은품 누락 여부 정합성 대조</li>
+            <li><b>포장 및 손상 판정</b> — 개봉 손상 분석, 정상·불량 판정 시스템 실시간 기록</li>
+          </ul>
+          <div class="foot"><span class="pill g">판정 즉시 리터니즈 포털 업로드</span></div>
+        </div>
+        <div class="card">
+          <div class="tag o-em">02 · 표준 양품화 작업 <span class="pill o" style="margin-left:6px">가치 복원 핵심</span></div>
+          <ul style="margin-top:10px">
+            <li><b>롤·밀착 클리닝</b> — 먼지 및 머리카락 정밀 제거</li>
+            <li><b>실밥 정리 작업</b> — 마감 불량·돌출 실밥 손질</li>
+            <li><b>미세 고체오염 닦기</b> — 화장품 등 경미 오염 정밀 클리닝</li>
+            <li><b>{{COMPANY}} 정밀 재폴딩</b> — 의복 전용 가이드 기준 폴딩</li>
+            <li><b>폴리백 규격 재포장</b> — 전용 투명 폴리백 밀봉 포장</li>
+          </ul>
+          <div class="foot"><span class="pill o">판매 가용성 정상 재고 복구 목표</span></div>
+        </div>
+        <div class="card">
+          <div class="tag" style="color:#33373b">03 · 부가 정비 옵션 <span class="pill" style="margin-left:6px">협의 후 적용</span></div>
+          <ul style="margin-top:10px">
+            <li><b>택/라벨 교체 부착</b> — 손상 택 제거 및 정품 등급 태그 재출력</li>
+            <li><b>습자지/포장박스 교체</b> — 포장 내부 구김 습자지 교체, 파손 외부 박스 이관</li>
+            <li><b>미세 구김 구김펴기(스팀)</b> — 피팅 구김 발생 시 의류 전용 행거형 고압 스팀 다림질</li>
+          </ul>
+          <div class="foot"><span class="pill">부자재 이관 후 협의 기준 적용</span></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="ftbar"></div><div class="ftname">리터니즈</div><div class="pageno">04</div>
+  </section>
+
+  <!-- 9. 입출고 전반 프로세스 -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">입출고 및 물류 운영<br>– 전반적 프로세스</h2></div>
+      <div class="lead">
+        <p>{{PLATFORM}} 및 각종 플랫폼의 반품 접수 직후부터 재고 반환까지 <b>원스톱으로 위탁 운영</b>합니다.</p>
+        <p>회수 → 입고 → 정밀 검수 → 양품화 → {{COMPANY}} 센터 반환까지 <b class="g">책임 경계가 명확한 end-to-end 프로세스</b>를 제공합니다.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage" style="bottom:46px">
+      <div class="steps">
+        <div class="step"><div class="bar" style="background:var(--green)"></div>
+          <div class="no">STEP 01 <span class="r">자동 생성</span></div><h4>반품 접수</h4>
+          <p>고객 주문 자동 수집, 웹훅·주문 API 기반 자동 동기화</p><div class="hl g-em">배송완료(T) 주문 대상</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="bar" style="background:var(--green)"></div>
+          <div class="no">STEP 02 <span class="r">운송사 연계</span></div><h4>지정 수거 연동</h4>
+          <p>대한통운·한진·우체국 등 연동, 검품센터 입하 즉시 바코드 스캔 입고</p><div class="hl g-em">전담 검품팀 분배</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="bar" style="background:var(--orange)"></div>
+          <div class="no">STEP 03 <span class="r">맞춤형 검품</span></div><h4>정밀 검수 및 촬영</h4>
+          <p>앞/뒤/훼손 부위 사진 고화질 촬영, 정상·불량 판정 및 정보 자동 등록</p><div class="hl o-em">리터니즈 포털 실시간 업로드</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="bar" style="background:var(--orange)"></div>
+          <div class="no">STEP 04 <span class="r">상품 가치 극대화</span></div><h4>양품화 및 포장</h4>
+          <p>먼지·머리카락 제거 및 오염물 닦기, {{COMPANY}} 기준 전용 접기 및 정밀 재포장</p><div class="hl">택/라벨 교체 지원</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="bar" style="background:#33373b"></div>
+          <div class="no">STEP 05 <span class="r">재고 복귀</span></div><h4>{{COMPANY}} 센터 반환</h4>
+          <p>24시간 보류(재검 대응) 후 {{COMPANY}} 지정 물류센터로 간선·화물 출고</p><div class="hl">{{COMPANY}} 센터 입고 편의 지원</div></div>
+      </div>
+      <div class="miniftr">
+        <div class="mt">
+          <table>
+            <tr><th>구분</th><th>기존 반품 처리</th><th style="color:var(--orange)">리터니즈 적용 범위</th><th>실무 효과</th></tr>
+            <tr><td><b>정보 동기화</b></td><td>수동 수집 및 엑셀 업로드</td><td class="o-em">{{PLATFORM}} API 자동 수집</td><td>실시간 누락 배제, 주문 관리 편의성</td></tr>
+            <tr><td><b>검품 및 판정</b></td><td>물류센터 한쪽 야적 적체·지연</td><td class="o-em">전담 검품팀 상시 검수</td><td>입고 즉시 48시간 내 검수 사진 업로드</td></tr>
+            <tr><td><b>양품화 작업</b></td><td>양품화 미처리로 폐기·지연 처리 증가</td><td class="o-em">표준 양품화 + 부가 작업</td><td>정상 가용 재고 복구율 획기적 증가</td></tr>
+          </table>
+        </div>
+      </div>
+    </div></div>
+    <div class="srcfoot">사례: 미나수 김현준 팀장 — “일주일 걸리던 반품, 3일 만에 끝냈습니다.”</div>
+    <div class="pageno">05</div>
+  </section>
+
+  <!-- 10. 운송비 정책 / 보관 -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">입출고 및 물류 운영<br>– 운송비 정책 · 보관</h2></div>
+      <div class="lead">
+        <p>수거 구간과 이동 반환 구간을 운수송비에 통합하여 <b>기존 택배비와 비교 검토</b>할 수 있습니다.</p>
+        <p>운임은 <b class="g">건당 작업비 · 운송비 · 포장재 · 보관비 · 예외 작업비를 분리</b>해 투명하게 제시합니다.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage">
+      <div class="flow">
+        <div class="fbox">구매자<br><span style="font-size:12px;font-weight:600;color:var(--gray)">B2C 반품 회수</span></div>
+        <div class="farr">─수거→</div>
+        <div class="fbox g">정밀 검품<br><span style="font-size:12px;font-weight:600;color:var(--gray)">입고 즉시 3면 촬영</span></div>
+        <div class="farr">→</div>
+        <div class="fbox o">재검 유예 보관<br><span style="font-size:12px;font-weight:600;color:var(--gray)">검품 후 24시간</span></div>
+        <div class="farr">→</div>
+        <div class="fbox y">무료 보관<br><span style="font-size:12px;font-weight:600;color:var(--gray)">최대 6일간</span></div>
+        <div class="farr">─간선→</div>
+        <div class="fbox gf">{{COMPANY_EN}}<br><span style="font-size:12px;font-weight:600;color:#dff3e4">물류창고</span></div>
+      </div>
+      <div style="text-align:center;font-size:15px;font-weight:700;padding:6px 0 4px;color:var(--ink-2)">
+        기본 운임 정산 구조 &nbsp; <b>운수송비(주문당) = <span class="g-em">수거비</span> + <span class="o-em">이동 운송비</span></b>
+      </div>
+      <div class="infocols">
+        <div class="infocol">
+          <h5>SHIPPING SPECIFICATIONS</h5><h4>이동 및 출고 실무 정책</h4>
+          <ul>
+            <li>출고 요일 및 간선 출고 주소는 {{COMPANY}} 운영진 요청에 맞춰 맞춤 설정</li>
+            <li>이동 수단: 일반 택배·노선 화물 간선·의류 전용 행거차량·급박송 퀵 중 선택 협의</li>
+            <li>모든 입출고 이력은 패킹리스트 전산 전송으로 추적</li>
+          </ul>
+        </div>
+        <div class="infocol">
+          <h5>PACKAGING OPTIONS</h5><h4>전용 포장 부자재 운영 정책</h4>
+          <ul>
+            <li>리터니즈 전용 박스 4종 규격 + {{COMPANY}} 브랜드 전용 박스 사용 가능</li>
+            <li>이관 필요 수량·적재 위치는 입고 스케줄과 대조해 사전 협의</li>
+            <li>습자지 교체 및 브랜드 스티커 부착 등 전용 가공 요건 구현 가능</li>
+          </ul>
+        </div>
+      </div>
+    </div></div>
+    <div class="ftbar"></div><div class="ftname">리터니즈</div><div class="pageno">06</div>
+  </section>
+
+  <!-- 11. 상품 관리 방식 Style vs SKU -->
+  <!-- ▼ GEN:style_sku — 비교표는 고정 자산. 리드(STYLE_SKU_LEAD)와 권장 노트(STYLE_SKU_NOTE)만 회사별로 채움.
+       고객이 SKU 단위를 우려했으면 그 발언을 인용, 아니면 일반 톤. 고객이 SKU 이슈를 전혀 안 다루면 이 슬라이드는 생략 가능 -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">상품 관리 방식<br>Style vs SKU</h2></div>
+      <div class="lead">
+        <p>{{STYLE_SKU_LEAD}}</p>
+        <p>자체 IT DAS 기반 PDA 스타일 분류·포장 경험을 다수 보유하고 있습니다.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage" style="background:#fff;">
+      <div style="padding:14px 30px 0;font-size:18px;font-weight:800;">📊 Style vs SKU 반송 방식 차원 비교표</div>
+      <div style="padding:14px 30px;">
+        <table class="tbl">
+          <tr><th>비교 항목</th><th>Style 기준 반환</th><th class="alt">Style + 사이즈 반환</th><th class="alt">SKU 세부 반환</th></tr>
+          <tr><td class="lab">실행 가능 시점</td><td class="g-em">즉시 적용 가능</td><td class="g-em">즉시 적용 가능</td><td class="o-em">로봇 소터 도입 후 가능</td></tr>
+          <tr><td class="lab">재고 정합성</td><td>Style 분리 적재</td><td>Style × 사이즈 정합성 매칭</td><td>단일 색상/사이즈 정밀 분리</td></tr>
+          <tr><td class="lab">박스 배송 수량</td><td class="g-em">대박스 적재로 박스 수 감소</td><td>적정 포장 체적 유지</td><td class="o-em">소량 다품종 분류로 박스 수 증가</td></tr>
+          <tr><td class="lab">운송 비용 효율</td><td class="g-em">박스 수 소량으로 운송비 최고 절감</td><td>운송 및 작업 지연 해소</td><td class="o-em">적재 비효율 통제 필요</td></tr>
+          <tr><td class="lab">물류 운영 난이도</td><td>보통 (PDA 실시간 연계 제어)</td><td>보통 (PDA 실시간 연계 제어)</td><td>로봇 소팅·전용 행낭화 추가 필요</td></tr>
+        </table>
+      </div>
+      <div class="note">{{STYLE_SKU_NOTE}}</div>
+    </div></div>
+    <div class="pageno">07</div>
+  </section>
+  <!-- ▲ GEN:style_sku -->
+
+  <!-- 12. {{PLATFORM}} 연동 -->
+  <!-- ▼ GEN:platform — {{PLATFORM}} 토큰은 전역 치환됨. 고객 플랫폼이 CAFE24가 아니면 웹훅/네이버페이 등 세부 조건을 플랫폼에 맞게 조정.
+       고객이 연동을 전혀 안 물었으면 이 슬라이드 축소/생략 가능 -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">{{PLATFORM}} 연동</h2></div>
+      <div class="lead">
+        <p>{{PLATFORM}} 및 국내 대표 커머스 플랫폼에서 자동 주문 수집을 제공합니다.</p>
+        <p>첫 단계부터 풀연동을 강요하지 않습니다. <b class="g">무연동/저연동 → 상태값 → 사진·검수 결과</b> 순으로
+        개발 리스크를 통제하는 단계형 연동을 제안합니다.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage" style="background:#fff;">
+      <div style="padding:18px 30px 0;font-size:17px;font-weight:800;">📡 시스템 연동 규격 및 주문 생성 필터링</div>
+      <div style="display:grid;grid-template-columns:1.3fr .9fr;gap:24px;padding:18px 30px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:14px;justify-content:center;margin-bottom:16px;">
+            <div style="background:var(--green-l);border-radius:8px;padding:14px 20px;text-align:center;"><b style="color:var(--green-d)">{{PLATFORM}} 쇼핑몰</b><br><span style="font-size:12px;color:var(--gray)">반품/교환 접수 웹훅 감지</span></div>
+            <span class="farr">→</span>
+            <div style="font-weight:800;color:var(--green)">API 주문 조회</div>
+            <span class="farr">→</span>
+            <div style="background:var(--orange-l);border-radius:8px;padding:14px 20px;text-align:center;"><b style="color:#c4561a">리터니즈 시스템</b><br><span style="font-size:12px;color:var(--gray)">반품 주문 실시간 자동 생성</span></div>
+          </div>
+          <table class="tbl">
+            <tr><th>구분</th><th>연동 포함 조건</th><th class="alt">연동 제외 조건</th></tr>
+            <tr><td class="lab">배송 상태</td><td class="g-em">배송 중 또는 배송 완료 주문 건</td><td>배송 전 및 취소 완료 상태 건</td></tr>
+            <tr><td class="lab">결제 수단</td><td class="g-em">일반 PG 결제 수단 전체</td><td>네이버페이(NCHECKOUT) 주문 건</td></tr>
+            <tr><td class="lab">상태 동기화</td><td class="g-em">{{PLATFORM}} → 리터니즈 연동</td><td>리터니즈 → {{PLATFORM}} 역전송</td></tr>
+          </table>
+        </div>
+        <div style="background:var(--green-l);border-radius:10px;padding:22px;">
+          <h6 style="font-size:11px;font-weight:800;color:var(--green-d);letter-spacing:.6px;margin-bottom:14px;">PORTAL FUNCTIONALITY</h6>
+          <div style="font-size:16px;font-weight:800;margin-bottom:14px;">리터니즈 전용 시스템 기능 범위</div>
+          <ul style="list-style:none;">
+            <li class="cf">반품 실시간 진행 상태 모니터링(수거·배송 상태 포함)</li>
+            <li class="cf">정상·불량 정밀 판정 및 사유별 검품 결과 조회</li>
+            <li class="cf">오염·파손 위치 고화질 다면 검품 이미지 조회</li>
+            <li class="cf">작업 불일치 해소용 '반품 주문 재접수' 처리 기능</li>
+            <li class="cf">파트너 관리자·전담 검품원 간 코멘트 질문/답변</li>
+          </ul>
+        </div>
+      </div>
+      <div style="margin:0 30px;background:var(--orange-l);border-left:4px solid var(--orange);border-radius:6px;padding:12px 18px;font-size:13.5px;color:var(--ink-2);line-height:1.55;">
+        📌 <b>검수 결과 및 사진 연동 안내</b> — 검품 결과 확인 및 사진 조회는 <b>리터니즈 전용 웹 서비스</b>를 통해 제어할 수 있습니다.
+        {{PLATFORM}} 내로 검수 정보/사진 전송 기능 탑재가 향후 필요할 경우, 별도 시스템 개발 협의를 통해 구축 범위를 수립하여 진행합니다.
+      </div>
+    </div></div>
+    <style>.cf{font-size:14px;line-height:1.55;color:var(--green-d);padding-left:18px;position:relative;margin-bottom:6px;}.cf:before{content:"✔";position:absolute;left:0;font-size:11px;top:2px;}</style>
+    <div class="pageno">08</div>
+  </section>
+  <!-- ▲ GEN:platform -->
+
+  <!-- 13. 의사결정자별 가치 -->
+  <!-- ▼ GEN:kpi — STORYLINE SPEC.KPI_ROWS로 행을 재구성. 부서·관심KPI는 의사결정자 맵에서, 메시지는 그 부서 설득 논리에서.
+       아래 7행은 리터니즈 표준 기본값(범용) — 회사 분석에 맞게 가감/수정하되 구조·클래스는 유지 -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">부서별 가치 정렬<br>(KPI 언어 번역)</h2></div>
+      <div class="lead">
+        <p>현업은 운영 항목을 묻지만 승인권자는 KPI 번역을 원합니다. 본 제안은 <b>검수 TAT → 환불 리드타임 → CS 재문의율 → 재구매 방어</b>로
+        운영 지표를 KPI 언어로 재번역합니다.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage" style="background:#fff;">
+      <div style="padding:16px 30px;">
+        <table class="tbl dm-tbl">
+          <tr><th>부서</th><th>관심 KPI</th><th class="alt" style="width:42%">리터니즈 제안 메시지</th></tr>
+          {{KPI_ROWS}}
+        </table>
+      </div>
+    </div></div>
+    <div class="pageno">09</div>
+  </section>
+  <!-- ▲ GEN:kpi -->
+
+  <!-- 14. 단계형 파일럿 제안 / 로드맵 -->
+  <!-- ▼ GEN:roadmap — 3단계(road-top)·간트는 리터니즈 표준 8주 기본값. 기간/대상 카테고리를 회사 파일럿 범위에 맞게 조정.
+       ROADMAP_NOTE는 확인 필요 데이터 + 후속 확장 항목(회사별)으로 채움 -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">단계형 파일럿<br>실행 로드맵</h2></div>
+      <div class="lead">
+        <p>전면 위탁·풀연동보다 <b>좁은 범위 · 기존 3PL 비충돌 · 수치 증명형</b> 파일럿이 중대형 고객사 승인에 유리합니다.</p>
+        <p>상위 1~2개 일반의류 카테고리 B2C 반품을 대상으로 <b class="g">회수→검수→양품화→사진증빙→상태값→재고반환</b>을 묶어 효과를 먼저 증명합니다.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage">
+      <div class="road">
+        <div class="road-top">
+          {{ROADMAP_TOP}}
+        </div>
+        <div class="gantt">
+          <div></div><div class="scale"><span>1주</span><span>2주</span><span>3주</span><span>4주</span><span>5주</span><span>6주</span><span>7주</span><span>8주</span></div>
+          <div class="glab">기준 정렬</div><div class="gbar" style="grid-column:2 / span 2;background:var(--green)">기준·코드 합의</div>
+          <div class="glab">파일럿 검수</div><div class="gbar" style="grid-column:4 / span 3;background:var(--orange)">검수·양품화 (이중검수)</div>
+          <div class="glab">CS 조회 적용</div><div class="gbar" style="grid-column:5 / span 3;background:var(--amber)">포털 사진·상태값 CS 연계</div>
+          <div class="glab">검증·리포트</div><div class="gbar" style="grid-column:8 / span 1;background:var(--green-d)">SLA 검증</div>
+        </div>
+        <div class="note" style="padding-top:18px;">{{ROADMAP_NOTE}}</div>
+      </div>
+    </div></div>
+    <div class="pageno">10</div>
+  </section>
+  <!-- ▲ GEN:roadmap -->
+
+  <!-- 15. 추가 확인 필요사항 -->
+  <!-- ▼ GEN:checklist — STORYLINE SPEC.CHECKLIST 6항목. 아래는 범용 기본값 — 회사 '추가 확인 필요사항'에 맞게 교체 -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2>실행을 위한<br>확인 요청 사항</h2></div>
+      <div class="lead">
+        <p>파일럿 범위·SLA·과금을 확정하기 위해 아래 항목의 데이터·기준 공유를 요청드립니다.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage" style="background:transparent;">
+      <div class="checks">
+        {{CHECKLIST_ITEMS}}
+      </div>
+    </div></div>
+    <div class="pageno">11</div>
+  </section>
+  <!-- ▲ GEN:checklist —— 이하 16~23은 검증된 서비스 소개서(LIB), 회사명 토큰 외 수정 금지 -->
+
+  <!-- 16. DIVIDER 서비스 소개서 -->
+  <section class="slide cover">
+    <div class="ct" style="flex-direction:column;height:100%;">
+      <div style="text-align:center;">
+        <div style="font-size:64px;font-weight:800;letter-spacing:-2px;">↻R</div>
+        <div style="font-size:15px;margin-top:8px;"><b>반품이 필요</b>할 때</div>
+        <div style="font-size:54px;font-weight:800;margin-top:6px;">리터니즈</div>
+        <div style="font-size:16px;opacity:.85;margin-top:30px;">서비스 소개서</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 17. 반품 케어 새로운 기준 -->
+  <section class="slide">
+    <div class="pad" style="display:flex;gap:40px;height:100%;align-items:center;">
+      <div style="flex:1;">
+        <h2 style="font-size:34px;font-weight:800;line-height:1.35;">반품 케어의<br>새로운 기준</h2>
+        <div style="width:140px;height:3px;background:#222;margin:24px 0;"></div>
+        <h2 style="font-size:30px;font-weight:800;color:var(--green);line-height:1.35;">브랜드 가치를 지키는<br>완벽한 반품 솔루션</h2>
+        <p style="font-size:16px;color:var(--ink-2);line-height:1.8;margin-top:30px;">
+          이제는 반품 수거부터 검품, 양품화까지<br>‘정확하고, 빠르게, 화주사 입장에서’</p>
+        <p style="font-size:16px;color:var(--ink-2);line-height:1.8;margin-top:18px;">
+          고객 경험 관점에서 설계된 리터니즈 솔루션으로,<br>브랜드 가치를 지키며 반품을 관리할 수 있습니다.</p>
+      </div>
+      <div style="flex:1;background:linear-gradient(135deg,#2b2f33,#4a4f54);border-radius:12px;height:560px;display:flex;align-items:center;justify-content:center;color:#7a8088;font-size:15px;">
+        검품 센터 전경
+      </div>
+    </div>
+  </section>
+
+  <!-- 18. 빠른 배송보다 편한 반품 -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2>빠른 배송보다<br>편한 반품을 찾는 시대</h2></div>
+      <div class="lead"><p>이제 고객의 선택은 ‘빠른 배송’보다 <b class="g">‘간편한 반품’</b>에 달려 있습니다.</p></div>
+    </div>
+    <div class="body"><div class="stage" style="background:transparent;">
+      <div class="g2" style="grid-template-columns:1fr 1fr;align-items:center;">
+        <div style="padding:10px 20px;">
+          <p style="font-size:15px;color:var(--ink-2);line-height:1.9;margin-bottom:18px;">
+            · 반품 물류 만족도는 신규 고객 유입과 기존 고객 재구매에 결정적 영향<br>
+            · 교환/반품/환불 편리성 <b class="o">35.1%</b>로 배송 만족도 6개 측면 평가 1위<br>
+            · 당일 배송보다 <b class="g">무료 반품 교환</b>이 선호도 높음</p>
+          <table class="tbl" style="font-size:13px;">
+            <tr><th>구분</th><th>선호도</th></tr>
+            <tr><td class="lab" style="background:var(--orange-l);color:#c4561a">교환/반품/환불 편리성</td><td class="o-em">35.1%</td></tr>
+            <tr><td>비용</td><td>13.0%</td></tr>
+            <tr><td>물품상태</td><td>12.8%</td></tr>
+            <tr><td>정보/알림</td><td>11.4%</td></tr>
+          </table>
+        </div>
+        <div style="padding:10px 20px;">
+          <table class="tbl" style="font-size:13px;">
+            <tr><th>구분</th><th>선호도</th></tr>
+            <tr><td class="lab">무료배송</td><td>79%</td></tr>
+            <tr><td class="lab" style="background:var(--green-l);color:var(--green-d)">무료 반품 교환</td><td class="g-em">54%</td></tr>
+            <tr><td>당일 배송</td><td>42%</td></tr>
+            <tr><td>다음날 배송</td><td>40%</td></tr>
+          </table>
+          <div style="background:#fff;border-radius:10px;padding:20px;margin-top:18px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+            <div style="font-size:24px;font-weight:800;color:#222;">“반품의 시대”</div>
+            <p style="font-size:14px;color:var(--ink-2);line-height:1.7;margin-top:10px;">
+              “두 개 다 고르자 고르자 라는 생각에 무작정 주문했고, <b>사용하지 않은 제품은 반품했다.</b>”<br>
+              혜택으로 30일 동안 반품 배송료는 ‘0원’.</p>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="srcfoot">출처: 장연녕(2017) 중앙대학교 석사 / 컨슈머인사이트·한양대 유통연구센터 / 「배송정책별 소비자 선호도 조사」 Walker Sands, 2018 / 「반품의 시대」 allure, 2023.2.2</div>
+    <div class="pageno">03</div>
+  </section>
+
+  <!-- 19. 이커머스 어려움 -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2>이커머스 브랜드가 겪는<br>반품 운영의 어려움</h2></div>
+      <div class="lead"><p>플랫폼들의 ‘빠른 반품 처리 요구’와 ‘고객 CS 지연부터 블랙컨슈머 대응까지’,
+        부족한 반품 상태 정보로 인해 이커머스 브랜드는 다양한 반품 이슈에 직면하고 있습니다.</p></div>
+    </div>
+    <div class="body"><div class="stage" style="background:transparent;">
+      <div class="pains">
+        <div class="pain">
+          <div class="bubble">“오늘까지 검수 확인 안 되면<br>자동 환불 처리됩니다.”</div>
+          <div class="emoji">😐</div>
+          <div style="font-size:14px;color:var(--ink-2);margin-bottom:10px;">입점 플랫폼의</div>
+          <div class="badge">빠른 반품 처리 요청</div>
+        </div>
+        <div class="pain">
+          <div class="bubble">“반품 상태가 보이는<br>검품 사진이 있으면<br>더 좋을 거 같은데…”</div>
+          <div class="emoji">🤢</div>
+          <div style="font-size:14px;color:var(--ink-2);margin-bottom:10px;">반품 상태 정보 부족으로 인한</div>
+          <div class="badge">고객 CS 대응 지연</div>
+        </div>
+        <div class="pain">
+          <div class="bubble">“제 잘못 아닌데요?<br>증거 있나요?<br>얼른 환불해 주세요..!”</div>
+          <div class="emoji">😡</div>
+          <div style="font-size:14px;color:var(--ink-2);margin-bottom:10px;">증거 자료가 없는 상황에</div>
+          <div class="badge">블랙컨슈머 요청 대응 어려움</div>
+        </div>
+      </div>
+    </div></div>
+    <div class="ftbar"></div><div class="ftname">리터니즈</div><div class="pageno">04</div>
+  </section>
+
+  <!-- 20. 고객사 -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2>패션 업계가 먼저 선택한<br>리터니즈</h2></div>
+      <div class="lead"><p>리터니즈는 무신사 TOP20 브랜드부터 프랑스 매장 입점 고급 브랜드까지 고객사로 함께하고 있습니다.
+        <b>작업 공간 내 개인 기기 사용 금지, CCTV 전 범위 상시 녹음, 보안 서명 관리</b> 등 믿을 수 있는 보안 체계를 제공합니다.</p></div>
+    </div>
+    <div class="body"><div class="stage" style="background:transparent;">
+      <div class="clients">
+        <div class="clogo"><b>ESPIONAGE</b><span>에스피오나지</span></div>
+        <div class="clogo"><b>KIJUN</b><span>기준</span></div>
+        <div class="clogo"><b>JOORTI</b><span>주르티</span></div>
+        <div class="clogo"><b>Amour moier</b><span>아무르무아르</span></div>
+        <div class="clogo"><b>Y-JACK</b><span>와이잭</span></div>
+        <div class="clogo"><b>MOIR SEOUL</b><span>모어서울</span></div>
+        <div class="clogo"><b>EENK</b><span>잉크</span></div>
+        <div class="clogo"><b>AKIII CLASSIC</b><span>아키클래식</span></div>
+        <div class="clogo"><b>BRONSON</b><span>브론슨</span></div>
+        <div class="clogo"><b>1993STUDIO</b><span>1993 스튜디오</span></div>
+        <div class="clogo"><b>FIDODIDO</b><span>피도디도</span></div>
+        <div class="clogo"><b>PARITY</b><span>패리티</span></div>
+        <div class="clogo"><b>SNOW PEAK</b><span>스노우피크</span></div>
+        <div class="clogo"><b>BORNTOWIN</b><span>본투윈</span></div>
+      </div>
+    </div></div>
+    <div class="pageno">06</div>
+  </section>
+
+  <!-- 21. Before / After -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2>단 하루 차이로<br>달라지는 CS 대응력</h2></div>
+      <div class="lead"><p>입고 후 평균 1영업일 반품 처리 완료, 실시간 반품 사진 및 상태 정보 확인,
+        고객 귀책사유까지 명확히 기록하여 <b>CS 대응 및 블랙컨슈머 방어가 용이</b>해집니다.</p></div>
+    </div>
+    <div class="body"><div class="stage" style="background:transparent;padding:0;">
+      <div class="ba">
+        <div class="row before">
+          <div class="rl">Before<small>파트너 도입 전</small></div>
+          <div class="cell"><span class="em">😐</span>입점 플랫폼의<br><b>빠른 반품 처리 요청</b></div>
+          <div class="cell"><span class="em">🤢</span>상태 정보 부족으로<br><b>고객 CS 대응 지연</b></div>
+          <div class="cell"><span class="em">😡</span>증거 자료 없는<br><b>블랙컨슈머 대응 어려움</b></div>
+        </div>
+        <div class="row after">
+          <div class="rl">After<small style="color:var(--orange)">*브랜드 평판 관리에 유리</small></div>
+          <div class="cell"><span class="em">😮</span>입고 후 평균 1영업일 내<br><b class="g-em">반품 처리 완료</b></div>
+          <div class="cell"><span class="em">🥳</span>실시간 사진·상태 정보로<br><b class="g-em">신속한 CS 대응</b></div>
+          <div class="cell"><span class="em">🙏</span>고객 귀책사유 수집으로<br><b class="g-em">정확한 블랙컨슈머 대응</b></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="pageno">07</div>
+  </section>
+
+  <!-- 22. 검품 센터 / 보안 -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2>반품 물류에 최적화된<br>검품 센터 · 보안</h2></div>
+      <div class="lead">
+        <p>반품에 특화된 설비와 센터 구조로 빠르고 효율적인 업무가 가능합니다.</p>
+        <p><b>[특징]</b> 2K 이상 고화질 촬영 장비 · 빠른 불량 상세정보 체크 · AI 불량 탐지 보조로 더 빠르고 정확한 검품</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage" style="background:transparent;">
+      <div class="split">
+        <div class="news">
+          <div class="ntag">주요 언론보도</div>
+          <div class="newsitem"><span class="src">[KL뉴스] 2025.12.23</span><br><b>리터놀, DATA-Stars서 장관상 수상… ‘반품 물류 혁신’</b></div>
+          <div class="newsitem"><span class="src">[디트뉴스24] 2025.12.19</span><br><b>대전혁신센터 투자기업 리터놀, 데이터스타즈 최종평가 1위</b></div>
+          <div class="newsitem"><span class="src">[네이트 뉴스] 2026.01.23</span><br><b>폐기 예정 반품에 새 생명을…‘리터니즈’ 주목</b></div>
+        </div>
+        <div class="sec">
+          <div class="stag">보안 체계</div>
+          <div class="secitem"><div class="n">1</div><b>작업 공간 개인 기기 사용 금지</b></div>
+          <div class="secitem"><div class="n">2</div><b>CCTV 전 구역 24시간 녹화</b></div>
+          <div class="secitem"><div class="n">3</div><b>센터 방문자 보안준수 서명</b></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="ftbar"></div><div class="ftname">리터니즈</div><div class="pageno">11</div>
+  </section>
+
+  <!-- 23. CLOSING -->
+  <section class="slide closing">
+    <div class="cc"><h2>리터니즈를 통해<br>모든 반품 문제를 한번에 해결해 보세요.</h2></div>
+    <div class="contact">
+      <div><b>홈페이지</b> returneeds.com</div>
+      <div><b>이용 문의</b> sales@returnall.kr</div>
+    </div>
+    <div class="rn">↻ 리터니즈</div>
+  </section>
+
+</div>
+</body>
+</html>

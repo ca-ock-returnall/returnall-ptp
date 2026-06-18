@@ -1,0 +1,9 @@
+# SSE(/api/jobs/{id}/stream) 실시간 스트리밍을 위한 per-vhost nginx 설정.
+# nginx-proxy 가 ptp.returneeds.com 의 location 블록에 include 한다.
+proxy_http_version 1.1;
+proxy_set_header Connection '';
+proxy_buffering off;
+proxy_cache off;
+chunked_transfer_encoding off;
+proxy_read_timeout 3600s;
+proxy_send_timeout 3600s;

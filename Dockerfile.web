@@ -1,0 +1,38 @@
+# 리터니즈 제안서 자동 생성 웹서비스 (Next.js, web/)
+# 빌드 컨텍스트 = 저장소 루트. 런타임에 web/ 가 상위의 pipeline/·content-library/·rawdata/ 를 fs로 읽고
+# output/ 에 산출물을 쓴다(lib/config.ts findRoot 가 cwd 상위로 올라가며 pipeline/stage1_research.md 를 찾음).
+FROM node:22-slim
+
+WORKDIR /app/web
+
+# 의존성 먼저(레이어 캐시). NODE_ENV 를 여기서 production 으로 두면 npm 이 devDependencies(typescript 등)를
+# 건너뛰어 Next 빌드가 tsconfig paths(@/* 별칭)를 못 푼다 → 빌드 단계에선 설정하지 않는다.
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+
+# 소스 + 빌드.
+COPY web/ ./
+
+# 로그인 자격증명/서명키. 빌드 시 edge 미들웨어 번들에 인라인되고 런타임 node 라우트도 같은 ENV 를 읽어
+# 토큰이 일치한다. 런타임(compose)에서 덮어쓰면 불일치하므로 값은 여기(빌드)에서 고정한다.
+ARG APP_USERNAME=pushtoprod
+ARG APP_PASSWORD=push2prod!
+ARG APP_SECRET=ptp-prod-session-secret
+ENV APP_USERNAME=$APP_USERNAME \
+    APP_PASSWORD=$APP_PASSWORD \
+    APP_SECRET=$APP_SECRET \
+    NEXT_TELEMETRY_DISABLED=1
+
+RUN npm run build
+
+# 런타임 자산: /app/web 에서 상위(/app)로 올라가 /app/pipeline 등을 찾는다.
+WORKDIR /app
+COPY pipeline ./pipeline
+COPY content-library ./content-library
+COPY rawdata ./rawdata
+
+WORKDIR /app/web
+ENV NODE_ENV=production
+EXPOSE 8000
+# next start -p 8000
+CMD ["npm", "run", "start"]
