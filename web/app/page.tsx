@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { type Lang, UI, proposalFileName } from "@/lib/i18n";
+import { useLang } from "@/lib/useLang";
 
 type SearchItem =
   | { type: "query"; query: string }
@@ -17,17 +19,20 @@ type StageState = {
   startedAt?: number;
   endedAt?: number;
 };
+// 단계 메타(아이콘·판단 레이어 여부). 제목은 언어 사전(t)에서 가져온다.
 const STAGES = [
-  { n: 1, icon: "🔎", title: "공개정보 리서치", judge: false },
-  { n: 2, icon: "🧩", title: "페인포인트 추론", judge: true },
-  { n: 3, icon: "🧭", title: "스토리라인 설계", judge: true },
-  { n: 4, icon: "📑", title: "제안서 초안 조립", judge: false },
+  { n: 1, icon: "🔎", key: "stage1" as const, judge: false },
+  { n: 2, icon: "🧩", key: "stage2" as const, judge: true },
+  { n: 3, icon: "🧭", key: "stage3" as const, judge: true },
+  { n: 4, icon: "📑", key: "stage4" as const, judge: false },
 ];
+type T = (typeof UI)[Lang];
+const stageTitle = (t: T, key: (typeof STAGES)[number]["key"]) => t[key];
 
 // 결과를 마크다운 애니메이션으로 렌더링할 단계(① 리서치 · ③ 스토리라인).
 const REVEAL_STAGES = new Set([1, 3]);
 
-const blank = (): StageState => ({ status: "", sub: "대기", text: "", search: [], artifacts: [] });
+const blank = (): StageState => ({ status: "", sub: "", text: "", search: [], artifacts: [] });
 const initSteps = (): Record<number, StageState> => ({ 1: blank(), 2: blank(), 3: blank(), 4: blank() });
 
 // 세션 히스토리(서버 파일 저장). 목록 메타와 전체 레코드.
@@ -55,25 +60,26 @@ type SessionFull = SessionMeta & {
   artifacts: Record<string, string>;
 };
 
-// 서버 레코드(완료/오류) → 단계 상태 복원.
-function stepsFromRecord(r: SessionFull): Record<number, StageState> {
+// 서버 레코드(완료/오류) → 단계 상태 복원. 산출물 키는 "01_"/"02_"/"03_" 접두로 매칭해 언어 무관.
+function stepsFromRecord(r: SessionFull, t: T): Record<number, StageState> {
   const s = initSteps();
   const a = r.artifacts || {};
-  const md1 = a["01_공개자료_리서치.md"];
+  const findKey = (prefix: string) => Object.keys(a).find((k) => k.startsWith(prefix));
+  const k1 = findKey("01_");
   s[1] = {
-    status: md1 != null ? "done" : "",
-    sub: md1 != null ? "완료" : "",
-    text: md1 || "",
+    status: k1 ? "done" : "",
+    sub: k1 ? t.doneStat : "",
+    text: k1 ? a[k1] : "",
     search: (r.pages || []).map((p) => ({ type: "page", url: p.url, title: p.title, chars: p.chars, ok: p.ok }) as SearchItem),
-    artifacts: md1 != null ? ["01_공개자료_리서치.md"] : [],
+    artifacts: k1 ? [k1] : [],
   };
-  const md2 = a["02_회의록_분석.md"];
-  s[2] = md2 != null
-    ? { status: "done", sub: "완료", text: md2, search: [], artifacts: ["02_회의록_분석.md"] }
-    : { ...blank(), status: "skip", sub: "회의록 미입력" };
-  const md3 = a["03_종합_분석.md"];
-  s[3] = { status: md3 != null ? "done" : "", sub: md3 != null ? "완료" : "", text: md3 || "", search: [], artifacts: md3 != null ? ["03_종합_분석.md"] : [] };
-  s[4] = { status: r.proposalName ? "done" : "", sub: r.proposalName ? "완료" : "", text: "", search: [], artifacts: r.proposalName ? [r.proposalName] : [] };
+  const k2 = findKey("02_");
+  s[2] = k2
+    ? { status: "done", sub: t.doneStat, text: a[k2], search: [], artifacts: [k2] }
+    : { ...blank(), status: "skip", sub: t.notesMissing };
+  const k3 = findKey("03_");
+  s[3] = { status: k3 ? "done" : "", sub: k3 ? t.doneStat : "", text: k3 ? a[k3] : "", search: [], artifacts: k3 ? [k3] : [] };
+  s[4] = { status: r.proposalName ? "done" : "", sub: r.proposalName ? t.doneStat : "", text: "", search: [], artifacts: r.proposalName ? [r.proposalName] : [] };
   return s;
 }
 
@@ -122,6 +128,8 @@ function fmt(ms: number): string {
 }
 
 export default function Home() {
+  const [lang, setLang] = useLang();
+  const t = UI[lang];
   const [company, setCompany] = useState("");
   const [url, setUrl] = useState("");
   const [notes, setNotes] = useState("");
@@ -172,8 +180,8 @@ export default function Home() {
       return next;
     });
   }
-  function pushDelta(stage: number, t: string) {
-    bufRef.current[stage] = (bufRef.current[stage] ?? "") + t;
+  function pushDelta(stage: number, text: string) {
+    bufRef.current[stage] = (bufRef.current[stage] ?? "") + text;
     if (!flushRef.current) flushRef.current = setTimeout(flush, 60);
   }
 
@@ -247,10 +255,10 @@ export default function Home() {
 
   function fmtReset(v?: string): string {
     if (!v) return "";
-    const t = Date.parse(v);
-    if (isNaN(t)) return v;
-    const s = Math.max(0, Math.round((t - Date.now()) / 1000));
-    return s >= 60 ? `${Math.floor(s / 60)}분 ${s % 60}초 후 리셋` : `${s}초 후 리셋`;
+    const ts = Date.parse(v);
+    if (isNaN(ts)) return v;
+    const s = Math.max(0, Math.round((ts - Date.now()) / 1000));
+    return t.resetIn(s);
   }
 
   // 라이브 경과시간 틱.
@@ -302,7 +310,7 @@ export default function Home() {
       }
       if (finished.status === "done") {
         try {
-          arts[`${company}_제안서.html`] = await (await fetch(`/proposals/${jobId}`)).text();
+          arts[proposalName || proposalFileName(company, lang)] = await (await fetch(`/proposals/${jobId}`)).text();
         } catch {
           /* ignore */
         }
@@ -378,11 +386,11 @@ export default function Home() {
     }
     if (!r) return;
     setBusy(false);
-    setError(r.status === "error" ? "오류: " + (r.error || "") : "");
+    setError(r.status === "error" ? t.errPrefix + (r.error || "") : "");
     setStarted(true);
     setCompany(r.company);
     setUrl(r.url);
-    setSteps(stepsFromRecord(r));
+    setSteps(stepsFromRecord(r, t));
     setKeypoints(r.keypoints || []);
     setAttachInfo(r.attached?.length || r.skipped?.length ? { attached: r.attached, skipped: r.skipped } : null);
     setMeta({ demo: r.demo, model: r.model, effort: r.effort, key: "" });
@@ -445,7 +453,7 @@ export default function Home() {
       switch (d.kind) {
         case "stage_start":
           if (!runStartRef.current) runStartRef.current = Date.now();
-          setStage(d.stage, { status: "run", sub: "생성 중…", startedAt: Date.now() });
+          setStage(d.stage, { status: "run", sub: t.generating, startedAt: Date.now() });
           break;
         case "delta":
           pushDelta(d.stage, d.text);
@@ -460,13 +468,13 @@ export default function Home() {
           setKeypoints(d.items);
           break;
         case "stage_done":
-          setStage(d.stage, { status: "done", sub: "완료", endedAt: Date.now(), artifacts: d.artifact ? [d.artifact] : [] });
+          setStage(d.stage, { status: "done", sub: t.doneStat, endedAt: Date.now(), artifacts: d.artifact ? [d.artifact] : [] });
           break;
         case "stage_skip":
-          setStage(d.stage, { status: "skip", sub: d.reason || "건너뜀" });
+          setStage(d.stage, { status: "skip", sub: d.reason || t.skipped });
           break;
         case "error":
-          setError("오류: " + d.message);
+          setError(t.errPrefix + d.message);
           es.close();
           setBusy(false);
           setRunEnd(Date.now());
@@ -474,7 +482,7 @@ export default function Home() {
           fetchSessions();
           break;
         case "done":
-          setProposalName(`${companyName}_제안서.html`);
+          setProposalName(d.proposal || proposalFileName(companyName, lang));
           es.close();
           setBusy(false);
           setRunEnd(Date.now());
@@ -508,13 +516,14 @@ export default function Home() {
     fd.set("company", company);
     fd.set("url", url);
     fd.set("notes", notes);
+    fd.set("lang", lang);
     if (apiKey) fd.set("apiKey", apiKey);
     if (modelSel) fd.set("model", modelSel);
     if (effortSel) fd.set("effort", effortSel);
     for (const f of pickedFiles) fd.append("files", f);
     const res = await fetch("/api/generate", { method: "POST", body: fd });
     if (!res.ok) {
-      setError("시작 실패: " + (await res.text()));
+      setError(t.startFail + (await res.text()));
       setBusy(false);
       return;
     }
@@ -538,25 +547,30 @@ export default function Home() {
   return (
     <div className="wrap">
       <div className="screen1">
-      <button type="button" className="gear corner" onClick={() => setSettingsOpen(true)}>
-        ⚙ 설정{apiKey ? <span className="keydot" title="API 키 설정됨" /> : null}
-      </button>
-      <a href="/api/logout" className="gear corner logout">로그아웃</a>
+      <div className="topbar">
+        <button type="button" className="gear lang" onClick={() => setLang(lang === "ko" ? "en" : "ko")} title={t.langName}>
+          🌐 {t.langName}
+        </button>
+        <a href="/api/logout" className="gear logout">{t.logout}</a>
+        <button type="button" className="gear" onClick={() => setSettingsOpen(true)}>
+          {t.settings}{apiKey ? <span className="keydot" title={t.keySet} /> : null}
+        </button>
+      </div>
       <div className="hero">
-        <h1 className="logo">리터니즈 <span>제안서 자동 생성</span></h1>
-        <p className="tagline">회사명과 홈페이지 URL만 넣으면 리서치 · 페인포인트 · 스토리라인 · 제안서까지 자동 완주</p>
+        <h1 className="logo">{t.logoMain} <span>{t.logoSub}</span></h1>
+        <p className="tagline">{t.tagline}</p>
         <form onSubmit={onSubmit} className="heroform">
           <div className="searchbox2">
-            <input className="q" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="회사명 (예: 안다르)" required />
+            <input className="q" value={company} onChange={(e) => setCompany(e.target.value)} placeholder={t.phCompany} required />
             <span className="divider2" />
-            <input className="q" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="홈페이지 URL (https://…)" required />
+            <input className="q" value={url} onChange={(e) => setUrl(e.target.value)} placeholder={t.phUrl} required />
           </div>
           <button type="button" className="adv" onClick={() => setAdvOpen((v) => !v)}>
-            {advOpen ? "– 회의록 첨부 닫기" : "＋ 회의록 첨부 (선택)"}
+            {advOpen ? t.attachClose : t.attachOpen}
           </button>
           {advOpen && (
             <div className="advbox">
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="회의록/메일/메모를 붙여넣으세요. 페인포인트 추론(STAGE 2)에 반영됩니다." />
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t.phNotes} />
               <input
                 ref={fileRef}
                 type="file"
@@ -580,15 +594,15 @@ export default function Home() {
                   if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
                 }}
               >
-                파일을 끌어다 놓거나 <span className="browse">클릭해서 선택</span>
-                <div className="fhint">지원: txt · md · csv · tsv · json · log · html · docx — 텍스트로 추출해 STAGE 2에 반영</div>
+                {t.dropPrefix}<span className="browse">{t.dropBrowse}</span>
+                <div className="fhint">{t.dropHint}</div>
               </div>
               {pickedFiles.length > 0 && (
                 <div className="files">
                   {pickedFiles.map((f, i) => (
                     <span className="filechip" key={`${f.name}-${i}`}>
                       📎 {f.name}
-                      <span className="rm" title="제거" onClick={(e) => { e.stopPropagation(); removeFile(i); }}>✕</span>
+                      <span className="rm" title={t.remove} onClick={(e) => { e.stopPropagation(); removeFile(i); }}>✕</span>
                     </span>
                   ))}
                 </div>
@@ -596,13 +610,13 @@ export default function Home() {
             </div>
           )}
           <button type="submit" className="cta" disabled={busy}>
-            {busy ? "진행 중…" : "제안서 생성 시작"}
+            {busy ? t.ctaBusy : t.ctaStart}
           </button>
         </form>
 
         {history.length > 0 && (
           <div className="histwrap">
-            <div className="histtitle">세션 히스토리 <span className="muted">· 서버 저장</span></div>
+            <div className="histtitle">{t.histTitle} <span className="muted">{t.histSaved}</span></div>
             <ul className="histlist">
               {history.map((h) => (
                 <li key={h.id} className={h.status} onClick={() => openSession(h)}>
@@ -611,16 +625,16 @@ export default function Home() {
                   <span className="hurl">{h.url}</span>
                   <span className="htime">
                     {h.status === "running" ? (
-                      <span className="hrun">진행 중 {Math.min(h.stage, 4)}/4 ▸ 관전</span>
+                      <span className="hrun">{t.histWatch(h.stage)}</span>
                     ) : (
                       <>
-                        {new Date(h.createdAt).toLocaleString("ko-KR", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                        {new Date(h.createdAt).toLocaleString(t.locale, { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
                         {h.status === "done" && h.finishedAt ? ` · ${fmt(h.finishedAt - h.createdAt)}` : ""}
-                        {h.status === "error" ? " · 오류" : ""}
+                        {h.status === "error" ? t.histError : ""}
                       </>
                     )}
                   </span>
-                  <span className="hdel" title="삭제" onClick={(e) => { e.stopPropagation(); deleteSession(h.id); }}>✕</span>
+                  <span className="hdel" title={t.del} onClick={(e) => { e.stopPropagation(); deleteSession(h.id); }}>✕</span>
                 </li>
               ))}
             </ul>
@@ -639,7 +653,7 @@ export default function Home() {
                 <div className="pmwrap" key={st.n}>
                   <div className={`pmnode ${s.status}`}>
                     <div className="pmcircle">{s.status === "done" ? "✓" : s.status === "skip" ? "–" : st.icon}</div>
-                    <div className="pmlabel">{st.title}</div>
+                    <div className="pmlabel">{stageTitle(t, st.key)}</div>
                     <div className="pmtime">
                       {s.status === "run" && s.startedAt ? fmt(now - s.startedAt) : ""}
                       {(s.status === "done" || s.status === "skip") && s.startedAt && s.endedAt ? fmt(s.endedAt - s.startedAt) : ""}
@@ -653,21 +667,21 @@ export default function Home() {
 
           {/* 계측 HUD */}
           <div className="hud">
-            <div className="chip"><span className="k">경과</span><span className="v">{fmt(elapsed)}</span></div>
-            <div className="chip"><span className="k">단계</span><span className="v">{doneCount}/4</span></div>
-            <div className="chip"><span className="k">생성</span><span className="v">{totalChars.toLocaleString()}자</span></div>
-            <div className="chip"><span className="k">웹검색</span><span className="v">{totalSearches}회</span></div>
-            <div className="chip alt"><span className="k">모델</span><span className="v">{meta.model || "—"}</span></div>
-            <div className="chip alt"><span className="k">effort</span><span className="v">{meta.effort || "—"}</span></div>
-            <div className="chip alt"><span className="k">키</span><span className="v">{meta.key || "—"}</span></div>
+            <div className="chip"><span className="k">{t.hudElapsed}</span><span className="v">{fmt(elapsed)}</span></div>
+            <div className="chip"><span className="k">{t.hudStage}</span><span className="v">{doneCount}/4</span></div>
+            <div className="chip"><span className="k">{t.hudGen}</span><span className="v">{t.charsUnit(totalChars.toLocaleString())}</span></div>
+            <div className="chip"><span className="k">{t.hudSearch}</span><span className="v">{t.searchUnit(totalSearches)}</span></div>
+            <div className="chip alt"><span className="k">{t.hudModel}</span><span className="v">{meta.model || t.dash}</span></div>
+            <div className="chip alt"><span className="k">{t.hudEffort}</span><span className="v">{meta.effort || t.dash}</span></div>
+            <div className="chip alt"><span className="k">{t.hudKey}</span><span className="v">{meta.key || t.dash}</span></div>
             {busy && <div className="chip live"><span className="dotlive" /> LIVE</div>}
           </div>
 
-          {meta.demo && <div className="demo">DEMO 모드: 워크드 안다르 산출물을 스트리밍으로 재생합니다(API 키 미설정).</div>}
+          {meta.demo && <div className="demo">{t.demoBanner}</div>}
           {attachInfo && (attachInfo.attached.length > 0 || attachInfo.skipped.length > 0) && (
             <div className="attach">
-              {attachInfo.attached.length > 0 && <>📎 첨부 회의록 {attachInfo.attached.length}건 반영 ({attachInfo.attached.join(", ")})</>}
-              {attachInfo.skipped.length > 0 && <span className="skip"> · 미지원 {attachInfo.skipped.length}건 제외 ({attachInfo.skipped.join(", ")})</span>}
+              {attachInfo.attached.length > 0 && <>{t.attachApplied(attachInfo.attached.length, attachInfo.attached.join(", "))}</>}
+              {attachInfo.skipped.length > 0 && <span className="skip">{t.attachSkipped(attachInfo.skipped.length, attachInfo.skipped.join(", "))}</span>}
             </div>
           )}
 
@@ -677,14 +691,14 @@ export default function Home() {
           <div className="stagewrap">
             {STAGES.map((st) => {
               const s = steps[st.n];
-              if (s.status === "") return <div className="scard pending" key={st.n}><div className="schead"><span className="sico">{st.icon}</span><span className="stitle">{st.title}</span><span className="sstat">대기</span></div></div>;
+              if (s.status === "") return <div className="scard pending" key={st.n}><div className="schead"><span className="sico">{st.icon}</span><span className="stitle">{stageTitle(t, st.key)}</span><span className="sstat">{t.waiting}</span></div></div>;
               return (
                 <div className={`scard ${s.status}`} key={st.n}>
                   <div className="schead">
                     <span className="sico">{s.status === "done" ? "✓" : s.status === "skip" ? "–" : st.icon}</span>
                     <span className="stitle">
-                      {st.title}
-                      {st.judge && <span className="muted"> · 판단 레이어</span>}
+                      {stageTitle(t, st.key)}
+                      {st.judge && <span className="muted">{t.judgeLayer}</span>}
                     </span>
                     <span className="sstat">{s.sub}</span>
                   </div>
@@ -695,12 +709,12 @@ export default function Home() {
                         it.type === "page" ? (
                           <div className="sq" key={idx}>
                             <span className={`qchip ${it.ok ? "" : "fail"}`}>{it.ok ? "🌐" : "⚠"} {it.title || it.url}</span>
-                            {it.ok && <span className="pgmeta">{it.chars.toLocaleString()}자 · {it.url}</span>}
+                            {it.ok && <span className="pgmeta">{t.charsUnit(it.chars.toLocaleString())} · {it.url}</span>}
                           </div>
                         ) : it.type === "query" ? (
                           <div className="sq" key={idx}><span className="qchip">🔎 {it.query}</span></div>
                         ) : (
-                          <div className="sr" key={idx}>└ 결과 {it.count}건{it.titles.length ? ` · ${it.titles.join(" · ")}` : ""}</div>
+                          <div className="sr" key={idx}>{t.searchResult(it.count, it.titles.join(" · "))}</div>
                         ),
                       )}
                     </div>
@@ -715,7 +729,7 @@ export default function Home() {
                   )}
 
                   {s.status === "done" && s.artifacts.map((a) => (
-                    <button className="viewbtn" key={a} onClick={() => viewArtifact(a)}>📄 {a} 렌더링 보기</button>
+                    <button className="viewbtn" key={a} onClick={() => viewArtifact(a)}>{t.viewRender(a)}</button>
                   ))}
                 </div>
               );
@@ -725,17 +739,17 @@ export default function Home() {
 
           <aside className="colside">
             <div className="kp">
-              <div className="kphead">🎯 주요 포인트</div>
+              <div className="kphead">{t.kpTitle}</div>
 
               <div className="kpsec">
-                <div className="kplabel">대상</div>
-                <div className="kpval">{company || "—"}</div>
-                <div className="kpmeta">{meta.model || "—"} · effort {meta.effort || "—"}</div>
+                <div className="kplabel">{t.kpTarget}</div>
+                <div className="kpval">{company || t.dash}</div>
+                <div className="kpmeta">{meta.model || t.dash} · effort {meta.effort || t.dash}</div>
               </div>
 
               {collectedPages.length > 0 && (
                 <div className="kpsec">
-                  <div className="kplabel">검색봇 수집 페이지 ({collectedPages.length})</div>
+                  <div className="kplabel">{t.kpCollected(collectedPages.length)}</div>
                   <div className="kpchips">
                     {collectedPages.map((p, i) => (
                       <span className="kpchip" key={i} title={p.url}>{p.title || p.url}</span>
@@ -745,9 +759,9 @@ export default function Home() {
               )}
 
               <div className="kpsec">
-                <div className="kplabel">핵심 포인트</div>
+                <div className="kplabel">{t.kpPoints}</div>
                 {keypoints.length === 0 ? (
-                  <div className="kpempty">스토리라인 설계 완료 시 정리됩니다…</div>
+                  <div className="kpempty">{t.kpEmpty}</div>
                 ) : (
                   <ul className="kplist">
                     {keypoints.map((k, i) => (
@@ -769,13 +783,13 @@ export default function Home() {
 
       {proposalName && (
         <div className="card result">
-          <div className="resulttitle">✅ 제안서 초안 완성 <span className="muted">· 총 {fmt(elapsed)}</span></div>
+          <div className="resulttitle">{t.resultDone} <span className="muted">{t.totalTime(fmt(elapsed))}</span></div>
           <div className="dlrow">
-            <button type="button" className="open" onClick={openProposal}>제안서 열기 (HTML) →</button>
-            <a className="dl" href={`/api/jobs/${jobId}/pptx`}>⬇ PowerPoint(.pptx) 다운로드</a>
-            <button type="button" className="dl" onClick={downloadHtml}>⬇ HTML 다운로드</button>
+            <button type="button" className="open" onClick={openProposal}>{t.openHtml}</button>
+            <a className="dl" href={`/api/jobs/${jobId}/pptx`}>{t.dlPptx}</a>
+            <button type="button" className="dl" onClick={downloadHtml}>{t.dlHtml}</button>
           </div>
-          <div className="hint">HTML은 브라우저 인쇄(⌘P) → ‘PDF로 저장’으로도 내보낼 수 있고, PPTX는 파워포인트/Keynote/Google 슬라이드에서 바로 편집할 수 있습니다. (PPTX는 해당 세션이 서버에 남아 있을 때 받을 수 있습니다.)</div>
+          <div className="hint">{t.resultHint}</div>
         </div>
       )}
 
@@ -783,76 +797,76 @@ export default function Home() {
         <div className="modal" onClick={() => setSettingsOpen(false)}>
           <div className="modalbox set" onClick={(e) => e.stopPropagation()}>
             <div className="modalhead">
-              <span>⚙ 설정</span>
-              <span className="x" onClick={() => setSettingsOpen(false)}>닫기 ✕</span>
+              <span>{t.settings}</span>
+              <span className="x" onClick={() => setSettingsOpen(false)}>{t.close}</span>
             </div>
             <div className="setbody">
               <div className="field">
-                <label>Anthropic API 키</label>
-                <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="sk-ant-... (비우면 서버 .env 키 사용)" autoComplete="off" />
-                <div className="fhint">브라우저(localStorage)에만 저장되고 요청 시 서버로 전송됩니다. 비우면 서버 .env의 키를 사용하며, 키가 전혀 없으면 DEMO 모드로 동작합니다.</div>
+                <label>{t.setApiKey}</label>
+                <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder={t.phApiKey} autoComplete="off" />
+                <div className="fhint">{t.setApiKeyHint}</div>
               </div>
               <div className="row">
                 <div className="field">
-                  <label>모델</label>
+                  <label>{t.setModel}</label>
                   <select value={modelSel} onChange={(e) => setModelSel(e.target.value)}>
-                    <option value="">서버 기본값(.env)</option>
-                    <option value="claude-sonnet-4-6">claude-sonnet-4-6 (빠름)</option>
-                    <option value="claude-opus-4-8">claude-opus-4-8 (고품질)</option>
+                    <option value="">{t.setModelDefault}</option>
+                    <option value="claude-sonnet-4-6">claude-sonnet-4-6 ({t.modelFast})</option>
+                    <option value="claude-opus-4-8">claude-opus-4-8 ({t.modelHigh})</option>
                     <option value="claude-opus-4-7">claude-opus-4-7</option>
                   </select>
                 </div>
                 <div className="field">
-                  <label>effort (속도/품질)</label>
+                  <label>{t.setEffort}</label>
                   <select value={effortSel} onChange={(e) => setEffortSel(e.target.value)}>
-                    <option value="">서버 기본값(.env)</option>
-                    <option value="low">low (가장 빠름)</option>
+                    <option value="">{t.setEffortDefault}</option>
+                    <option value="low">low ({t.effortLow})</option>
                     <option value="medium">medium</option>
                     <option value="high">high</option>
-                    <option value="xhigh">xhigh (최고 품질)</option>
+                    <option value="xhigh">xhigh ({t.effortXHigh})</option>
                   </select>
                 </div>
               </div>
               <div className="setbtns">
-                <button type="button" onClick={saveSettings}>저장</button>
-                <button type="button" className="ghost" onClick={() => { setApiKey(""); setModelSel(""); setEffortSel(""); }}>초기화</button>
+                <button type="button" onClick={saveSettings}>{t.save}</button>
+                <button type="button" className="ghost" onClick={() => { setApiKey(""); setModelSel(""); setEffortSel(""); }}>{t.reset}</button>
               </div>
 
               <div className="field">
                 <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span>API 잔여량 (분 단위 레이트리밋)</span>
+                  <span>{t.usageTitle}</span>
                   <button type="button" className="ghost" style={{ padding: "2px 10px", fontSize: 12 }} onClick={loadUsage} disabled={usageLoading}>
-                    {usageLoading ? "조회 중…" : "새로고침"}
+                    {usageLoading ? t.loading : t.refresh}
                   </button>
                 </label>
-                {usageLoading && <div className="fhint">조회 중…</div>}
+                {usageLoading && <div className="fhint">{t.loading}</div>}
                 {!usageLoading && usage && (
                   !usage.configured ? (
-                    <div className="fhint">API 키가 설정되어 있지 않습니다 (DEMO 모드).</div>
+                    <div className="fhint">{t.usageNoKey}</div>
                   ) : (() => {
-                    const L = usage.limits || {};
-                    const cats: [string, string][] = [["requests", "요청"], ["tokens", "토큰"], ["input-tokens", "입력 토큰"], ["output-tokens", "출력 토큰"]];
-                    const rows = cats.filter(([k]) => L[`${k}-remaining`] !== undefined || L[`${k}-limit`] !== undefined);
+                    const Lm = usage.limits || {};
+                    const cats: [string, string][] = [["requests", t.catRequests], ["tokens", t.catTokens], ["input-tokens", t.catInputTokens], ["output-tokens", t.catOutputTokens]];
+                    const rows = cats.filter(([k]) => Lm[`${k}-remaining`] !== undefined || Lm[`${k}-limit`] !== undefined);
                     return (
                       <>
                         {!usage.ok && (
                           <div className="fhint" style={{ color: "#c0392b", fontWeight: 700 }}>
                             ⚠️ {usage.error === "rate_limit"
-                              ? `레이트리밋 도달${usage.retry_after ? ` · ${usage.retry_after}초 후 재시도 가능` : ""}`
-                              : (usage.message || usage.error || "오류")}
+                              ? t.usageRateLimit(usage.retry_after || "")
+                              : (usage.message || usage.error || t.errPrefix)}
                           </div>
                         )}
                         {rows.length === 0 ? (
-                          <div className="fhint">레이트리밋 정보를 가져오지 못했습니다.</div>
+                          <div className="fhint">{t.usageNoInfo}</div>
                         ) : (
                           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginTop: 6 }}>
                             <tbody>
                               {rows.map(([k, label]) => {
-                                const rem = L[`${k}-remaining`];
-                                const lim = L[`${k}-limit`];
-                                const reset = L[`${k}-reset`];
-                                const r = Number(rem), l = Number(lim);
-                                const pct = !isNaN(r) && !isNaN(l) && l > 0 ? Math.max(0, Math.min(100, Math.round((r / l) * 100))) : null;
+                                const rem = Lm[`${k}-remaining`];
+                                const lim = Lm[`${k}-limit`];
+                                const reset = Lm[`${k}-reset`];
+                                const rn = Number(rem), ln = Number(lim);
+                                const pct = !isNaN(rn) && !isNaN(ln) && ln > 0 ? Math.max(0, Math.min(100, Math.round((rn / ln) * 100))) : null;
                                 return (
                                   <tr key={k} style={{ borderBottom: "1px solid #e3e5e7" }}>
                                     <td style={{ padding: "8px 0", fontWeight: 700, width: 84, verticalAlign: "top" }}>{label}</td>
@@ -876,7 +890,7 @@ export default function Home() {
                     );
                   })()
                 )}
-                <div className="fhint">Anthropic은 키의 월 잔액·한도를 API로 제공하지 않아 분 단위 레이트리밋 잔여치만 표시합니다.</div>
+                <div className="fhint">{t.usageFootnote}</div>
               </div>
             </div>
           </div>
@@ -888,7 +902,7 @@ export default function Home() {
           <div className="modalbox" onClick={(e) => e.stopPropagation()}>
             <div className="modalhead">
               <span>{viewer.title}</span>
-              <span className="x" onClick={() => setViewer(null)}>닫기 ✕</span>
+              <span className="x" onClick={() => setViewer(null)}>{t.close}</span>
             </div>
             <div className="md">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{viewer.body}</ReactMarkdown>

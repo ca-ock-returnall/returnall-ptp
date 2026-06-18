@@ -305,3 +305,6 @@ cython_debug/
 # basic-auth hashes (서버에서만 보관)
 nginx/htpasswd/*
 !nginx/htpasswd/.gitkeep
+
+# 런타임 세션 스토어 (배포 대상 아님)
+.data/

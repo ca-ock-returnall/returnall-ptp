@@ -1,7 +1,65 @@
 // 스토리라인 사양 → PowerPoint(.pptx) 덱 생성. pptxgenjs 사용(Node 런타임).
 // 고객사 판단(GEN) 슬라이드 + 리터니즈 고정 역량 수치 슬라이드로 구성.
+import type { Lang } from "./i18n";
 import PptxGenJS from "pptxgenjs";
 import type { StorylineSpec } from "./schema";
+
+// PPTX 슬라이드 고정 라벨(언어별).
+const PL: Record<Lang, {
+  author: string;
+  core: string;
+  kpiTitle: string;
+  kpiHead: [string, string, string];
+  roadmap: string;
+  opsDetail: string;
+  productMgmt: string;
+  platformIntegration: (p: string) => string;
+  platformBody: (p: string) => string;
+  capability: string;
+  stats: [string, string][];
+  closing: string;
+}> = {
+  ko: {
+    author: "리터니즈 제안서 자동 생성",
+    core: "제안 핵심",
+    kpiTitle: "부서별 가치 정렬 (KPI 언어 번역)",
+    kpiHead: ["부서", "관심 KPI", "리터니즈 제안 메시지"],
+    roadmap: "단계형 파일럿 실행 로드맵",
+    opsDetail: "운영 상세 · 시스템 연동",
+    productMgmt: "상품 관리 (Style vs SKU)",
+    platformIntegration: (p) => `${p} 연동`,
+    platformBody: (p) =>
+      `${p} 및 주요 커머스 플랫폼 자동 주문 수집. 무연동/저연동 → 상태값 → 사진·검수 결과 순의 단계형 연동을 제안합니다.`,
+    capability: "리터니즈 운영 역량",
+    stats: [
+      ["6,000건/일", "검수·처리 CAPA"],
+      ["4,500건/일", "여유 처리량"],
+      ["48시간", "반품 처리 리드타임"],
+      ["99.99%", "검수 정확도"],
+    ],
+    closing: "반품, 끝까지 책임지는 운영 파트너",
+  },
+  en: {
+    author: "Returneeds AI Proposal Builder",
+    core: "Proposal essentials",
+    kpiTitle: "Value alignment by team (KPI language translation)",
+    kpiHead: ["Team", "KPI of interest", "Returneeds proposal message"],
+    roadmap: "Phased pilot execution roadmap",
+    opsDetail: "Operations detail · system integration",
+    productMgmt: "Product management (Style vs SKU)",
+    platformIntegration: (p) => `${p} integration`,
+    platformBody: (p) =>
+      `Automatic order collection from ${p} and major commerce platforms. We propose phased integration: no/low integration → status values → photos and inspection results.`,
+    capability: "Returneeds operating capacity",
+    stats: [
+      ["6,000 units/day", "Inspection/processing CAPA"],
+      ["4,500 units/day", "Spare throughput"],
+      ["48 hours", "Returns processing lead time"],
+      ["99.99%", "Inspection accuracy"],
+    ],
+    closing: "Returns, owned end-to-end by your operations partner",
+  },
+};
 
 const C = {
   green: "18883B",
@@ -29,11 +87,12 @@ function strip(s: string): string {
     .trim();
 }
 
-export async function buildPptx(spec: StorylineSpec): Promise<Buffer> {
+export async function buildPptx(spec: StorylineSpec, lang: Lang = "ko"): Promise<Buffer> {
+  const t = PL[lang];
   const pptx = new PptxGenJS();
   pptx.defineLayout({ name: "WIDE", width: 13.333, height: 7.5 });
   pptx.layout = "WIDE";
-  pptx.author = "리터니즈 제안서 자동 생성";
+  pptx.author = t.author;
   pptx.company = "returneeds";
 
   // 1) 커버
@@ -50,7 +109,7 @@ export async function buildPptx(spec: StorylineSpec): Promise<Buffer> {
 
   // 3) 3카드 (고객 구조 / 핵심 과제 / 제안 방향)
   s = pptx.addSlide();
-  s.addText("제안 핵심", { x: 0.7, y: 0.5, w: 12, h: 0.6, fontFace: FONT, fontSize: 22, bold: true, color: C.ink });
+  s.addText(t.core, { x: 0.7, y: 0.5, w: 12, h: 0.6, fontFace: FONT, fontSize: 22, bold: true, color: C.ink });
   const accents = [C.green, C.orange, "33373B"];
   spec.cards.slice(0, 3).forEach((c, i) => {
     const x = 0.7 + i * 4.1;
@@ -67,8 +126,8 @@ export async function buildPptx(spec: StorylineSpec): Promise<Buffer> {
 
   // 4) 부서별 KPI 정렬
   s = pptx.addSlide();
-  s.addText("부서별 가치 정렬 (KPI 언어 번역)", { x: 0.7, y: 0.5, w: 12, h: 0.6, fontFace: FONT, fontSize: 22, bold: true, color: C.green });
-  const head = ["부서", "관심 KPI", "리터니즈 제안 메시지"].map((t) => ({ text: t, options: { bold: true, color: C.white, fill: { color: C.green }, fontFace: FONT, fontSize: 13, valign: "middle" } }));
+  s.addText(t.kpiTitle, { x: 0.7, y: 0.5, w: 12, h: 0.6, fontFace: FONT, fontSize: 22, bold: true, color: C.green });
+  const head = t.kpiHead.map((label) => ({ text: label, options: { bold: true, color: C.white, fill: { color: C.green }, fontFace: FONT, fontSize: 13, valign: "middle" } }));
   const body = spec.kpi_rows.map((r) => [
     { text: strip(r.dept), options: { bold: true, color: C.ink, fill: { color: "F4F6F6" }, fontFace: FONT, fontSize: 12 } },
     { text: strip(r.kpi), options: { color: C.ink2, fontFace: FONT, fontSize: 12 } },
@@ -78,7 +137,7 @@ export async function buildPptx(spec: StorylineSpec): Promise<Buffer> {
 
   // 5) 단계형 파일럿 로드맵
   s = pptx.addSlide();
-  s.addText("단계형 파일럿 실행 로드맵", { x: 0.7, y: 0.5, w: 12, h: 0.6, fontFace: FONT, fontSize: 22, bold: true, color: C.green });
+  s.addText(t.roadmap, { x: 0.7, y: 0.5, w: 12, h: 0.6, fontFace: FONT, fontSize: 22, bold: true, color: C.green });
   spec.pilot_phases.slice(0, 3).forEach((p, i) => {
     const x = 0.7 + i * 4.1;
     s.addShape("roundRect" as any, { x, y: 1.6, w: 3.8, h: 1.9, fill: { color: C.white }, line: { color: C.green, width: 1 }, rectRadius: 0.1 });
@@ -94,10 +153,10 @@ export async function buildPptx(spec: StorylineSpec): Promise<Buffer> {
 
   // 6) 운영 상세 (Style/SKU · 플랫폼 연동)
   s = pptx.addSlide();
-  s.addText("운영 상세 · 시스템 연동", { x: 0.7, y: 0.5, w: 12, h: 0.6, fontFace: FONT, fontSize: 22, bold: true, color: C.green });
+  s.addText(t.opsDetail, { x: 0.7, y: 0.5, w: 12, h: 0.6, fontFace: FONT, fontSize: 22, bold: true, color: C.green });
   s.addText(
     [
-      { text: "상품 관리 (Style vs SKU)", options: { bold: true, fontSize: 14, color: C.ink, breakLine: true, paraSpaceAfter: 4 } },
+      { text: t.productMgmt, options: { bold: true, fontSize: 14, color: C.ink, breakLine: true, paraSpaceAfter: 4 } },
       { text: strip(spec.style_sku_lead), options: { fontSize: 13, color: C.ink2, breakLine: true, paraSpaceAfter: 3 } },
       { text: strip(spec.style_sku_note), options: { fontSize: 13, color: C.greenD, breakLine: true } },
     ] as any,
@@ -105,21 +164,16 @@ export async function buildPptx(spec: StorylineSpec): Promise<Buffer> {
   );
   s.addText(
     [
-      { text: `${strip(spec.platform)} 연동`, options: { bold: true, fontSize: 14, color: C.ink, breakLine: true, paraSpaceAfter: 4 } },
-      { text: `${strip(spec.platform)} 및 주요 커머스 플랫폼 자동 주문 수집. 무연동/저연동 → 상태값 → 사진·검수 결과 순의 단계형 연동을 제안합니다.`, options: { fontSize: 13, color: C.ink2 } },
+      { text: t.platformIntegration(strip(spec.platform)), options: { bold: true, fontSize: 14, color: C.ink, breakLine: true, paraSpaceAfter: 4 } },
+      { text: t.platformBody(strip(spec.platform)), options: { fontSize: 13, color: C.ink2 } },
     ] as any,
     { x: 0.7, y: 3.9, w: 11.9, h: 2.0, valign: "top", fontFace: FONT },
   );
 
   // 7) 리터니즈 운영 역량 (고정 수치)
   s = pptx.addSlide();
-  s.addText("리터니즈 운영 역량", { x: 0.7, y: 0.5, w: 12, h: 0.6, fontFace: FONT, fontSize: 22, bold: true, color: C.green });
-  const stats = [
-    ["6,000건/일", "검수·처리 CAPA"],
-    ["4,500건/일", "여유 처리량"],
-    ["48시간", "반품 처리 리드타임"],
-    ["99.99%", "검수 정확도"],
-  ];
+  s.addText(t.capability, { x: 0.7, y: 0.5, w: 12, h: 0.6, fontFace: FONT, fontSize: 22, bold: true, color: C.green });
+  const stats = t.stats;
   stats.forEach((st, i) => {
     const x = 0.7 + (i % 2) * 6.1;
     const y = 1.7 + Math.floor(i / 2) * 2.4;
@@ -131,7 +185,7 @@ export async function buildPptx(spec: StorylineSpec): Promise<Buffer> {
   // 8) 클로징
   s = pptx.addSlide();
   s.background = { color: C.green };
-  s.addText("반품, 끝까지 책임지는 운영 파트너", { x: 0.8, y: 2.4, w: 11.7, h: 1.2, fontFace: FONT, fontSize: 30, bold: true, color: C.white, align: "center" });
+  s.addText(t.closing, { x: 0.8, y: 2.4, w: 11.7, h: 1.2, fontFace: FONT, fontSize: 30, bold: true, color: C.white, align: "center" });
   s.addText("returneeds", { x: 0.8, y: 4.0, w: 11.7, h: 0.8, fontFace: FONT, fontSize: 26, italic: true, bold: true, color: "D9EFE0", align: "center" });
 
   const out = (await pptx.write({ outputType: "nodebuffer" })) as Buffer;

@@ -7,7 +7,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const { id } = await ctx.params;
   const job = getJob(id);
   if (!job || !job.pptx) {
-    return new Response("PPTX가 아직 준비되지 않았습니다.", { status: 404 });
+    const msg = job?.lang === "en" ? "The PPTX is not ready yet." : "PPTX가 아직 준비되지 않았습니다.";
+    return new Response(msg, { status: 404 });
   }
   const name = job.pptxName ?? "proposal.pptx";
   // 한글 파일명: RFC 5987 인코딩 + ascii 폴백

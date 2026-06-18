@@ -1,7 +1,9 @@
 // DEMO 모드용 스토리라인 사양(API 키 없을 때 조립 경로 시연).
+import type { Lang } from "./i18n";
 import type { StorylineSpec } from "./schema";
 
-export function demoSpec(company: string, platform = "CAFE24"): StorylineSpec {
+export function demoSpec(company: string, lang: Lang = "ko", platform = "CAFE24"): StorylineSpec {
+  if (lang === "en") return demoSpecEn(company, platform);
   return {
     proposal_title: `${company} B2C 반품 운영 모델 제안`,
     company,
@@ -55,5 +57,63 @@ export function demoSpec(company: string, platform = "CAFE24"): StorylineSpec {
       { label: "승인 기준", desc: "CAPA·단가·검수 정확도·연동·보안 중 우선순위" },
     ],
     src_foot: "공개자료 리서치 및 워크드 분석 기반 (DEMO).",
+  };
+}
+
+// 영어 DEMO 사양(영어 템플릿과 조합해 영문 제안서 시연).
+function demoSpecEn(company: string, platform: string): StorylineSpec {
+  return {
+    proposal_title: `${company} B2C Returns Operations Model Proposal`,
+    company,
+    company_en: company,
+    platform,
+    hero_headline: "Why returns<br>operations, now",
+    hero_lead:
+      "Rising returns create a connected chain of inspection delays, refund delays, CS load, and pressure on repurchase rates. " +
+      "Returneeds isolates only the inspection/refurbishment bottleneck, preserving brand standards while improving lead time.",
+    cards: [
+      {
+        tag: "Customer profile",
+        title: "Premium, quality-driven D2C",
+        bullets: ["Runs own mall and major channels in parallel", "Quality and brand trust are core KPIs", "Strict returns-inspection standards"],
+        pill: "Refurbishment / standard-preserving",
+      },
+      {
+        tag: "Core challenge",
+        title: "A chain of returns bottlenecks",
+        bullets: ["Inspection TAT delay → refund delay", "More CS re-inquiries and disputes", "Lost sales from delayed restock"],
+        pill: "Structural bottleneck",
+      },
+      {
+        tag: "Proposed direction",
+        title: "A narrow-scope pilot",
+        bullets: ["Top-category B2C returns only", "No conflict with existing 3PL", "Evidence-driven phased expansion"],
+        pill: "Low-burden start",
+      },
+    ],
+    style_sku_lead: "Reflecting concerns about the current restock unit (Style/SKU), we propose phased classification.",
+    style_sku_note: "Start with Style-level returns for immediate rollout, then expand to SKU detail after consistency is verified.",
+    kpi_rows: [
+      { dept: "Executives", kpi: "Revenue growth · brand trust", message: "Stabilizing returns operations is <b class='g'>reinforcing growth infrastructure</b>." },
+      { dept: "Logistics/SCM", kpi: "Capacity · freight · 3PL conflict", message: "Not full outsourcing — we <b>isolate only the inspection/refurbishment bottleneck</b>." },
+      { dept: "CS", kpi: "Refund inquiries · re-inquiry rate", message: "Inspection photos and status data cut <b class='o'>response time and disputes</b>." },
+      { dept: "Quality/QC", kpi: "Judgment criteria · error rate", message: `We absorb ${company}'s standards and manage with <b class='g'>dual inspection in the first 2 weeks</b>.` },
+      { dept: "MD/CRM", kpi: "Refund rate · repurchase rate", message: "Returns data connects to <b>per-SKU refund rates and repurchase defense</b>." },
+    ],
+    pilot_phases: [
+      { title: "Standards alignment (1–2 weeks)", desc: "Receive inspection criteria and refurbishment manual; agree on judgment codes and photo specs" },
+      { title: "Pilot operation (3–6 weeks)", desc: "Physical inspection and refurbishment of top categories; dual inspection for the first 2 weeks" },
+      { title: "Validation & expansion (7–8 weeks)", desc: "Report SLA, error rate, restock time; review status-data integration" },
+    ],
+    roadmap_note: "To confirm: last 12 months of returns volume and per-stage lead time. Next: review global/offline returns expansion.",
+    checklist: [
+      { label: "Returns volume data", desc: "Last 12 months of B2C returns — monthly avg, peak month, daily avg, peak day" },
+      { label: "Processing lead time", desc: "Time per stage: intake → pickup → inbound → inspection → refund → restock" },
+      { label: "Inspection criteria/manual", desc: `${company} inspection criteria, refurbishment tolerance, photo standards` },
+      { label: "Restock unit", desc: "Which is the actual restock basis: Style / Style+size / SKU" },
+      { label: "System segments", desc: `Manual-handling gaps between ${platform}, WMS, and 3PL; info CS must look up` },
+      { label: "Approval criteria", desc: "Priorities among capacity, unit price, inspection accuracy, integration, security" },
+    ],
+    src_foot: "Based on public-source research and worked analysis (DEMO).",
   };
 }

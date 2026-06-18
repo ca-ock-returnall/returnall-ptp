@@ -1,5 +1,6 @@
 // 인메모리 작업 저장소 + 진행 이벤트 pub/sub(SSE용). 단일 프로세스 데모 범위.
 import { randomBytes } from "node:crypto";
+import type { Lang } from "./i18n";
 
 export type Ev = { kind: string; [k: string]: unknown };
 
@@ -10,6 +11,7 @@ export type JobConfig = {
   apiKey?: string;
   model: string;
   effort: string;
+  lang: Lang;
   demo: boolean;
   hadNotes: boolean;
   attached: string[];
@@ -23,6 +25,7 @@ export class Job {
   apiKey?: string; // 설정 UI에서 주입된 키(없으면 환경변수 폴백)
   model: string;
   effort: string;
+  lang: Lang; // 산출물/진행 메시지 언어(ko/en)
   demo: boolean;
   hadNotes: boolean;
   attached: string[];
@@ -48,6 +51,7 @@ export class Job {
     this.apiKey = cfg.apiKey;
     this.model = cfg.model;
     this.effort = cfg.effort;
+    this.lang = cfg.lang;
     this.demo = cfg.demo;
     this.hadNotes = cfg.hadNotes;
     this.attached = cfg.attached;

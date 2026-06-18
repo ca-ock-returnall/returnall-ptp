@@ -21,8 +21,7 @@ body {
 
 /* ---------- 첫 화면(구글 스타일 히어로) ---------- */
 .screen1 { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-.gear.corner { position: absolute; top: 24px; right: 0; }
-.gear.corner.logout { right: 96px; text-decoration: none; }
+.topbar { position: absolute; top: 24px; right: 0; display: flex; align-items: center; gap: 8px; z-index: 5; }
 .hero { width: 100%; max-width: 660px; text-align: center; }
 .logo { font-size: 42px; font-weight: 800; letter-spacing: -1.2px; }
 .logo span { color: var(--green); }
@@ -62,9 +61,12 @@ body {
 @media (max-width: 560px) { .hurl { display: none; } }
 .hrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
-.gear { background: #fff; color: var(--ink); border: 1px solid #cfd3d7; padding: 8px 14px; font-size: 13.5px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; }
+.gear { height: 34px; background: #fff; color: var(--ink); border: 1px solid #cfd3d7; padding: 0 13px; font-size: 13.5px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; line-height: 1; cursor: pointer; text-decoration: none; white-space: nowrap; }
 .gear:hover { border-color: var(--green); color: var(--green-d); }
+.gear.lang { background: #f7f8f9; color: var(--gray); padding: 0 11px; }
+.gear.lang:hover { background: #fff; color: var(--green-d); }
 .keydot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; }
+@media (max-width: 560px) { .topbar { top: 14px; right: 0; gap: 6px; } .gear { height: 32px; font-size: 12.5px; padding: 0 10px; } }
 .modalbox.set { width: min(560px, 100%); }
 .setbody { padding: 20px 22px; }
 .setbody .field { margin-bottom: 16px; }

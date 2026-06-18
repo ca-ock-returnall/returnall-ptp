@@ -1,0 +1,953 @@
+<!--
+  Returneeds proposal template (proposal-template.html)
+  STAGE 4 copies and fills this file. See pipeline/stage4_assemble.md for how it is filled.
+
+  [Global tokens]  {{COMPANY}} company name · {{COMPANY_EN}} English name for logo · {{PLATFORM}} commerce platform
+               {{PROPOSAL_TITLE}} cover title · {{SRC_FOOT}} one-line source for slide 3
+  [GEN blocks]   Only the area between <!-- ▼ GEN:xxx --> ~ <!-- ▲ GEN:xxx --> is filled with the company analysis.
+               hero · core3cards · style_sku · platform · kpi · roadmap · checklist
+  [LIB blocks]   Slides outside the markers (capabilities · service deck · security) must not be edited except for the company-name token.
+  [Fixed figures]  CAPA 6,000 units/day · spare 4,500 units/day · 48 hours · 99.99% etc. are fixed Returneeds values — do not change.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{PROPOSAL_TITLE}} · Returneeds</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root{
+    --green:#18883B;       /* returneeds green */
+    --green-d:#0f6e2e;
+    --green-l:#e9f5ec;
+    --orange:#F26F21;
+    --orange-l:#fdeee3;
+    --amber:#F0A830;
+    --ink:#222629;
+    --ink-2:#4b5158;
+    --gray:#6b7280;
+    --card:#f1f2f3;
+    --line:#d7dadd;
+    --white:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{
+    background:#54585c;
+    font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Segoe UI",sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  .deck{display:flex;flex-direction:column;align-items:center;gap:22px;padding:28px 0 60px;}
+  .slide{
+    position:relative;
+    width:1280px;height:720px;
+    background:var(--white);
+    overflow:hidden;
+    box-shadow:0 6px 26px rgba(0,0,0,.35);
+    flex:0 0 auto;
+  }
+  /* ---------- shared slide chrome ---------- */
+  .pad{padding:54px 64px;}
+  .head{display:flex;gap:30px;align-items:flex-start;}
+  .head .title{flex:0 0 360px;}
+  .head h2{font-size:33px;font-weight:800;line-height:1.28;letter-spacing:-.5px;color:var(--ink);}
+  .head h2.g{color:var(--green);}
+  .title .rule{width:120px;height:5px;background:var(--ink);margin-bottom:18px;border-radius:2px;}
+  .head .lead{flex:1;padding-top:6px;border-top:1px solid var(--line);}
+  .head .lead p{font-size:17px;line-height:1.6;color:var(--ink-2);padding-top:14px;}
+  .head .lead p+p{padding-top:2px;}
+  b.g{color:var(--green);} b.o{color:var(--orange);}
+  .body{position:absolute;left:0;right:0;bottom:0;top:228px;}
+  .stage{position:absolute;left:64px;right:64px;top:0;bottom:46px;background:var(--card);border-radius:6px;}
+  .pageno{position:absolute;right:30px;bottom:16px;font-size:12px;color:#9aa0a6;}
+  .ftbar{position:absolute;left:64px;right:64px;bottom:30px;border-top:1px solid #e3e5e7;}
+  .ftname{position:absolute;left:64px;bottom:14px;font-size:13px;color:#b4b9be;font-weight:700;}
+
+  /* ---------- cover / dividers ---------- */
+  .cover{background:var(--green);color:#fff;}
+  .cover .ct{position:absolute;top:0;left:0;right:0;height:82%;display:flex;align-items:center;justify-content:center;text-align:center;}
+  .cover .ct h1{font-size:40px;font-weight:800;line-height:1.4;letter-spacing:-.5px;}
+  .cover .logos{position:absolute;bottom:60px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:46px;}
+  .logo-andar{font-size:46px;font-weight:300;letter-spacing:1px;color:#1c1c1c;font-family:"Segoe UI",sans-serif;}
+  .logo-x{color:#1c1c1c;font-size:18px;}
+  .logo-rn{font-style:italic;font-weight:800;font-size:34px;color:#1c1c1c;font-family:"Georgia",serif;}
+  .cover .logos .chip{background:#fff;border-radius:10px;padding:20px 40px;display:flex;align-items:center;}
+
+  .divider{background:linear-gradient(135deg,#1c7d3c 0%, #29a14d 55%, #0f6e2e 100%);color:#fff;}
+  .divider:before{content:"";position:absolute;inset:0;background:
+     repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0 2px,transparent 2px 60px);}
+  .divider .dt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+  .divider h2{font-size:38px;font-weight:800;letter-spacing:.5px;}
+  .divider .kr{font-size:30px;}
+  .divider .num{position:absolute;top:120px;left:64px;font-size:30px;font-weight:800;}
+
+  /* ---------- generic cards / grids ---------- */
+  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px;padding:30px;height:100%;}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:30px;height:100%;}
+  .card{background:#fff;border-radius:10px;padding:24px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;flex-direction:column;}
+  .card .tag{font-size:13px;font-weight:800;letter-spacing:.3px;margin-bottom:6px;}
+  .card h3{font-size:21px;font-weight:800;line-height:1.32;margin-bottom:14px;letter-spacing:-.4px;}
+  .card .top{height:5px;border-radius:3px;margin-bottom:16px;width:100%;}
+  .card ul{list-style:none;}
+  .card li{font-size:15px;line-height:1.62;color:var(--ink-2);padding-left:20px;position:relative;margin-bottom:7px;}
+  .card li:before{content:"✔";position:absolute;left:0;color:var(--green);font-size:12px;top:3px;}
+  .card .foot{margin-top:auto;padding-top:14px;}
+  .pill{display:inline-block;background:#eceff1;color:#566;border-radius:14px;padding:5px 14px;font-size:12px;font-weight:700;}
+  .pill.g{background:var(--green-l);color:var(--green-d);}
+  .pill.o{background:var(--orange-l);color:#c4561a;}
+
+  /* big stat rows */
+  .stat-wrap{display:flex;flex-direction:column;justify-content:center;gap:46px;height:100%;padding:34px 40px;}
+  .stat-row{display:flex;align-items:center;gap:34px;}
+  .stat-num{font-size:96px;font-weight:800;line-height:.9;letter-spacing:-3px;flex:0 0 300px;text-align:right;}
+  .stat-num small{font-size:34px;font-weight:800;}
+  .stat-num.g{color:var(--green);} .stat-num.o{color:var(--orange);}
+  .stat-info{border-left:0;padding-left:8px;position:relative;}
+  .stat-info:before{content:"";position:absolute;left:-18px;top:6px;width:30px;height:3px;}
+  .stat-info.g:before{background:var(--green);} .stat-info.o:before{background:var(--orange);}
+  .stat-info h4{font-size:17px;font-weight:800;margin-bottom:10px;}
+  .stat-info.g h4{color:var(--green);} .stat-info.o h4{color:var(--orange);}
+  .stat-info li{font-size:14.5px;line-height:1.55;color:var(--ink-2);list-style:none;padding-left:14px;position:relative;margin-bottom:5px;}
+  .stat-info li:before{content:"•";position:absolute;left:0;color:#9aa0a6;}
+
+  /* tables */
+  table.tbl{width:100%;border-collapse:collapse;font-size:14.5px;}
+  table.tbl th{background:var(--green);color:#fff;font-weight:700;padding:13px 12px;text-align:center;}
+  table.tbl th.alt{background:var(--green-d);}
+  table.tbl td{padding:12px 12px;text-align:center;border-bottom:1px solid #e3e5e7;color:var(--ink-2);}
+  table.tbl tr:nth-child(even) td{background:#fafbfb;}
+  table.tbl td.lab{font-weight:700;color:var(--ink);background:#f4f6f6;}
+  .o-em{color:var(--orange);font-weight:700;} .g-em{color:var(--green);font-weight:700;}
+
+  /* step process */
+  .steps{display:flex;align-items:stretch;gap:10px;padding:28px 26px 0;}
+  .step{flex:1;background:#fff;border-radius:9px;padding:16px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06);position:relative;}
+  .step .bar{height:4px;border-radius:3px;margin:-16px -14px 12px;border-top-left-radius:9px;border-top-right-radius:9px;}
+  .step .no{font-size:11px;font-weight:800;color:#566;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .step .no .r{font-weight:600;color:#9aa0a6;}
+  .step h4{font-size:16px;font-weight:800;margin-bottom:8px;}
+  .step p{font-size:12.5px;line-height:1.5;color:var(--ink-2);}
+  .step .hl{margin-top:10px;font-size:12px;font-weight:800;}
+  .arrow{align-self:center;color:#c4c8cc;font-size:20px;font-weight:800;}
+
+  .miniftr{display:flex;gap:22px;padding:18px 30px 24px;}
+  .miniftr .mt{flex:1;}
+  .miniftr table{width:100%;border-collapse:collapse;font-size:13px;}
+  .miniftr th{background:#e7eaec;color:#3a3f44;padding:8px;text-align:left;font-weight:700;}
+  .miniftr td{padding:8px;border-bottom:1px solid #e3e5e7;color:var(--ink-2);}
+
+  .flow{display:flex;align-items:center;justify-content:center;gap:0;padding:30px 26px 8px;}
+  .fbox{background:#fff;border:2px solid #d7dadd;border-radius:10px;padding:16px 20px;font-weight:800;font-size:17px;text-align:center;min-width:120px;}
+  .fbox.y{border-color:var(--amber);} .fbox.o{border-color:var(--orange);color:var(--orange);}
+  .fbox.g{border-color:var(--green);color:var(--green);} .fbox.gf{background:var(--green);color:#fff;border-color:var(--green);}
+  .farr{color:#c4c8cc;font-size:22px;padding:0 14px;}
+  .flow-desc{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;padding:6px 30px 24px;}
+  .flow-desc .fd{background:#fff;border-radius:9px;padding:16px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .flow-desc .fd b{display:block;font-size:15px;margin-bottom:6px;}
+  .flow-desc .fd b:before{content:"";display:inline-block;width:8px;height:14px;background:var(--green);border-radius:2px;margin-right:7px;vertical-align:-2px;}
+  .flow-desc .fd span{font-size:13px;color:var(--ink-2);line-height:1.5;}
+
+  /* two-col info blocks bottom */
+  .infocols{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:22px 30px;}
+  .infocol h5{font-size:11px;font-weight:800;color:#9aa0a6;letter-spacing:1px;margin-bottom:4px;}
+  .infocol h4{font-size:18px;font-weight:800;margin-bottom:12px;}
+  .infocol li{font-size:14px;line-height:1.62;color:var(--ink-2);list-style:none;padding-left:18px;position:relative;margin-bottom:5px;}
+  .infocol li:before{content:"✔";position:absolute;left:0;color:var(--green);font-size:11px;top:3px;}
+
+  /* capa bars */
+  .capa{display:grid;grid-template-columns:1.5fr 1fr;gap:22px;padding:30px;height:100%;}
+  .capa .panel{background:#fff;border-radius:10px;padding:26px 28px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .capa .panel h4{font-size:18px;font-weight:800;margin-bottom:26px;padding-left:12px;border-left:5px solid var(--green);}
+  .barrow{margin-bottom:24px;}
+  .barrow .bl{display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-bottom:8px;}
+  .barrow .track{height:18px;background:#e7eaec;border-radius:10px;overflow:hidden;}
+  .barrow .fill{height:100%;border-radius:10px;}
+  .barrow .sub{font-size:11px;color:#9aa0a6;margin-top:5px;}
+  .capa .side{display:flex;flex-direction:column;gap:18px;}
+  .sidebox{border-radius:10px;padding:22px 24px;}
+  .sidebox.green{background:var(--green);color:#fff;}
+  .sidebox.lgreen{background:var(--green-l);color:var(--green-d);}
+  .sidebox h6{font-size:11px;font-weight:800;letter-spacing:.6px;opacity:.85;margin-bottom:6px;}
+  .sidebox .bignum{font-size:54px;font-weight:800;text-align:right;line-height:1;}
+  .sidebox .bignum small{font-size:20px;}
+  .sidebox p{font-size:14px;margin-top:4px;}
+  .sidebox .x{font-size:46px;font-weight:800;color:var(--orange);text-align:right;}
+
+  /* decision maker grid */
+  .dm-tbl td.msg{text-align:left;color:var(--ink);}
+  .quote{position:absolute;right:48px;bottom:90px;text-align:right;}
+  .quote p{font-size:15px;font-weight:700;color:var(--ink);}
+  .quote span{font-size:13px;color:var(--gray);}
+
+  /* roadmap */
+  .road{padding:26px 30px;}
+  .road-top{display:flex;gap:14px;margin-bottom:24px;}
+  .road-top .rt{flex:1;background:#fff;border-radius:30px;padding:16px 22px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .road-top .rt b{font-size:16px;font-weight:800;}
+  .road-top .rt b.g{color:var(--green);}
+  .road-top .rt span{display:block;font-size:12.5px;color:var(--ink-2);margin-top:4px;line-height:1.45;}
+  .gantt{display:grid;grid-template-columns:120px repeat(8,1fr);align-items:center;row-gap:12px;}
+  .gantt .wk{text-align:center;font-size:13px;color:#7a8088;font-weight:700;}
+  .gantt .glab{font-size:14px;font-weight:700;}
+  .gbar{height:30px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12.5px;font-weight:700;}
+  .gantt .scale{grid-column:2 / span 8;background:var(--green-l);border-radius:16px;height:30px;display:grid;grid-template-columns:repeat(8,1fr);align-items:center;}
+  .gantt .scale span{text-align:center;font-size:12px;color:#5a6168;font-weight:700;}
+
+  /* checklist */
+  .checks{display:flex;flex-direction:column;gap:16px;padding:30px 80px;justify-content:center;height:100%;}
+  .chk{display:flex;align-items:center;gap:20px;background:#fff;border-radius:30px;padding:16px 28px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .chk .ic{flex:0 0 30px;height:30px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .chk b{font-size:18px;font-weight:800;flex:0 0 220px;}
+  .chk span{font-size:14.5px;color:var(--ink-2);}
+
+  /* pain bubbles */
+  .pains{display:grid;grid-template-columns:1fr 1fr 1fr;gap:30px;padding:46px 40px;height:100%;align-items:center;}
+  .pain{text-align:center;}
+  .bubble{background:#fff;border:2px solid var(--green);border-radius:16px;padding:18px;font-size:16px;font-weight:800;line-height:1.45;position:relative;margin-bottom:30px;min-height:120px;display:flex;align-items:center;justify-content:center;}
+  .bubble:after{content:"";position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);border-width:14px 12px 0;border-style:solid;border-color:var(--green) transparent transparent;}
+  .bubble:before{content:"";position:absolute;bottom:-11px;left:50%;transform:translateX(-50%);border-width:12px 10px 0;border-style:solid;border-color:#fff transparent transparent;z-index:1;}
+  .emoji{font-size:46px;margin:10px 0;}
+  .pain .badge{background:var(--green);color:#fff;border-radius:8px;padding:11px 16px;font-size:17px;font-weight:800;display:inline-block;}
+
+  /* before after */
+  .ba{display:grid;grid-template-rows:1fr 1fr;height:100%;}
+  .ba .row{display:grid;grid-template-columns:130px 1fr 1fr 1fr;align-items:center;padding:0 30px;gap:18px;}
+  .ba .before{background:#33373b;color:#fff;}
+  .ba .after{background:#eef1f3;}
+  .ba .rl{font-size:24px;font-weight:800;}
+  .ba .rl small{display:block;font-size:12px;font-weight:600;opacity:.8;margin-top:4px;}
+  .ba .after .rl{color:var(--green);}
+  .ba .cell{font-size:14px;line-height:1.5;text-align:center;padding:14px 8px;}
+  .ba .cell .em{display:block;font-size:18px;}
+
+  /* clients logos */
+  .clients{display:grid;grid-template-columns:repeat(7,1fr);gap:14px;padding:36px 30px;align-content:center;height:100%;}
+  .clogo{border:1.5px dashed #c7cbcf;border-radius:8px;padding:18px 8px;text-align:center;background:#fff;}
+  .clogo b{display:block;font-size:14px;font-weight:800;letter-spacing:.5px;}
+  .clogo span{font-size:12px;color:var(--gray);}
+
+  /* security / news split */
+  .split{display:grid;grid-template-columns:1.1fr .9fr;gap:26px;padding:30px;height:100%;}
+  .news .ntag,.sec .stag{display:inline-block;background:var(--green);color:#fff;font-size:12px;font-weight:800;border-radius:6px;padding:5px 14px;margin-bottom:16px;}
+  .newsitem{background:#fff;border-radius:8px;padding:14px 18px;box-shadow:2px 3px 0 rgba(0,0,0,.06);margin-bottom:14px;border-left:4px solid var(--green);}
+  .newsitem .src{font-size:11px;color:var(--gray);}
+  .newsitem b{font-size:15px;}
+  .secitem{display:flex;align-items:center;gap:14px;border:1.5px dashed var(--green);border-radius:30px;padding:14px 22px;margin-bottom:14px;background:#fff;}
+  .secitem .n{flex:0 0 28px;height:28px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;}
+  .secitem b{font-size:15px;font-weight:800;}
+
+  /* closing */
+  .closing{background:var(--green);color:#fff;}
+  .closing .cc{position:absolute;top:90px;left:64px;}
+  .closing h2{font-size:34px;font-weight:800;line-height:1.45;}
+  .closing .contact{position:absolute;top:280px;left:64px;font-size:16px;line-height:2.1;}
+  .closing .contact b{display:inline-block;width:90px;font-weight:800;}
+  .closing .rn{position:absolute;right:64px;bottom:50px;font-style:italic;font-weight:800;font-size:30px;}
+
+  .note{font-size:12px;color:#9aa0a6;padding:0 30px 16px;}
+  .srcfoot{position:absolute;left:64px;right:64px;bottom:18px;font-size:11px;color:#aeb3b8;border-top:1px solid #eceef0;padding-top:8px;}
+
+  @media print{
+    @page{size:1280px 720px;margin:0;}
+    html,body{background:#fff;}
+    .deck{gap:0;padding:0;}
+    .slide{box-shadow:none;page-break-after:always;break-after:page;}
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- 1. COVER -->
+  <section class="slide cover">
+    <div class="ct"><h1>{{PROPOSAL_TITLE}}</h1></div>
+    <div class="logos">
+      <div class="chip"><span class="logo-andar">{{COMPANY_EN}}</span></div>
+      <span class="logo-x">×</span>
+      <div class="chip"><span class="logo-rn">returneeds</span></div>
+    </div>
+  </section>
+
+  <!-- 2. DIVIDER: EXEC SUMMARY -->
+  <section class="slide divider">
+    <div class="dt"><h2>EXECUTIVE SUMMARY</h2></div>
+  </section>
+
+  <!-- 3. Core proposal message -->
+  <section class="slide">
+    <!-- ▼ GEN:hero — STORYLINE SPEC: HERO_HEADLINE / HERO_LEAD. headline may include <br> -->
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">{{HERO_HEADLINE}}</h2></div>
+      <div class="lead">
+        <p>{{HERO_LEAD}}</p>
+      </div>
+    </div>
+    <!-- ▲ GEN:hero -->
+    <!-- ▼ GEN:core3cards — 3 cards (customer structure / key challenge / proposed direction). Fill each card's tag·title·bullet3·pill with the SPEC's CARD_* values. Colors/structure are fixed -->
+    <div class="body"><div class="stage">
+      <div class="g3">
+        <div class="card">
+          <div class="top" style="background:var(--green)"></div>
+          <div class="tag g-em">{{CARD1_TAG}}</div>
+          <h3>{{CARD1_TITLE}}</h3>
+          <ul>
+            <li>{{CARD1_B1}}</li>
+            <li>{{CARD1_B2}}</li>
+            <li>{{CARD1_B3}}</li>
+          </ul>
+          <div class="foot"><span class="pill g">{{CARD1_PILL}}</span></div>
+        </div>
+        <div class="card">
+          <div class="top" style="background:var(--orange)"></div>
+          <div class="tag o-em">{{CARD2_TAG}}</div>
+          <h3>{{CARD2_TITLE}}</h3>
+          <ul>
+            <li>{{CARD2_B1}}</li>
+            <li>{{CARD2_B2}}</li>
+            <li>{{CARD2_B3}}</li>
+          </ul>
+          <div class="foot"><span class="pill o">{{CARD2_PILL}}</span></div>
+        </div>
+        <div class="card">
+          <div class="top" style="background:#33373b"></div>
+          <div class="tag" style="color:#33373b">{{CARD3_TAG}}</div>
+          <h3>{{CARD3_TITLE}}</h3>
+          <ul>
+            <li>{{CARD3_B1}}</li>
+            <li>{{CARD3_B2}}</li>
+            <li>{{CARD3_B3}}</li>
+          </ul>
+          <div class="foot"><span class="pill">{{CARD3_PILL}}</span></div>
+        </div>
+      </div>
+    </div></div>
+    <!-- ▲ GEN:core3cards -->
+    <div class="srcfoot">{{SRC_FOOT}}</div>
+  </section>
+
+  <!-- 4. Returns processing speed and accuracy -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">Returns Processing<br>Speed and Accuracy</h2></div>
+      <div class="lead">
+        <p>Returneeds takes over the entire operational workflow after a return is filed on each commerce platform, including {{PLATFORM}}.</p>
+        <p>From inbound scanning, inspection and high-resolution photography, and precision refurbishment to {{COMPANY}} standards, to fast inventory return, we control the full process in one stop to
+        <b>structurally resolve complex logistics bottlenecks</b> and <b>improve returns lead time</b>.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage">
+      <div class="stat-wrap">
+        <div class="stat-row">
+          <div class="stat-num g">48<small>hours</small></div>
+          <div class="stat-info g">
+            <h4>Inspection completion lead time</h4>
+            <ul>
+              <li>The time from inbound to inspection completion and information being updated in the portal. It is the leading synchronization metric for <b>refund decisions, CS responses, and inventory return scheduling</b>.</li>
+              <li>The {{COMPANY}} CS team can instantly view real-time images in the Returneeds web portal and respond to customer inquiries the same day.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-num o">99<small>.99%</small></div>
+          <div class="stat-info o">
+            <h4>Inspection photo and condition data accuracy</h4>
+            <ul>
+              <li>The share of completed inspections in which high-resolution images of damaged areas and judgment comments are properly provided. It is <b>a reliability metric you can present as evidence for change-of-mind/liability disputes and re-inspection requests</b>.</li>
+              <li>Skilled inspectors and AI-assisted detection catch even minor damage, and re-inspection requests eliminate the possibility of oversight.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="ftbar"></div><div class="ftname">Returneeds</div><div class="pageno">01</div>
+  </section>
+
+  <!-- 5. Inventory restoration 3 cards -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">Maximize Inventory Liquidity<br>with Perfect Restoration</h2></div>
+      <div class="lead">
+        <p>By standardizing the physical operational steps after a return is filed, we achieve <b>faster CS response and immediate inventory availability</b>.</p>
+        <p>We deliver three values that connect directly to {{COMPANY}}'s internal KPIs (refund rate, inventory turnover, repurchase rate).</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage">
+      <div class="g3">
+        <div class="card">
+          <div class="top" style="background:var(--green)"></div>
+          <div class="tag g-em">B2C return quality stabilization</div>
+          <h3>Standardized inspection and<br>refurbishment by {{COMPANY}}-dedicated inspectors</h3>
+          <ul>
+            <li>Precision sorting and opened-package inspection per inbound item</li>
+            <li>{{COMPANY}}-dedicated high-resolution inspection photography</li>
+            <li>Standard refurbishment (stain cleaning, loose-thread trimming) and repackaging</li>
+          </ul>
+          <div class="foot"><span class="pill g">Operational stabilization</span></div>
+        </div>
+        <div class="card">
+          <div class="top" style="background:var(--orange)"></div>
+          <div class="tag o-em">Advanced CS lookup</div>
+          <h3>Real-time condition data sharing<br>through the Returneeds portal</h3>
+          <ul>
+            <li>Inspection results and detailed close-up shots of damage locations</li>
+            <li>Customer-liability and product-defect judgment comments provided</li>
+            <li>CS team views in real time and links to same-day refund guidance</li>
+          </ul>
+          <div class="foot"><span class="pill o">Advanced CS utilization</span></div>
+        </div>
+        <div class="card">
+          <div class="top" style="background:#33373b"></div>
+          <div class="tag" style="color:#33373b">Quality data report</div>
+          <h3>Return-driver data based on<br>Style/SKU analysis</h3>
+          <ul>
+            <li>Reports patterning return reasons by SKU</li>
+            <li>Refurbishment-rate analysis surfaces weak points in design/sewing</li>
+            <li>Root-cause analysis of recurring defects, fed back to merchandising and CRM</li>
+          </ul>
+          <div class="foot"><span class="pill">Quality data analysis</span></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="ftbar"></div><div class="ftname">Returneeds</div><div class="pageno">02</div>
+  </section>
+
+  <!-- 6. DIVIDER: answers to inquiries -->
+  <section class="slide divider">
+    <div class="dt"><h2 class="kr">Responses to {{COMPANY}}'s Items for Confirmation</h2></div>
+  </section>
+
+  <!-- 7. Operational capacity - throughput (CAPA) -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">Operational Capacity<br>– Throughput (CAPA)</h2></div>
+      <div class="lead">
+        <p>With <b class="o">4,500 units/day</b> of spare inspection capacity in normal times, we can immediately absorb even the surge of returns right after peak season or promotions.</p>
+        <p>We present the <b>daily processable volume and peak-season scale</b> that {{COMPANY}} requested, separated into average CAPA and peak CAPA.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage">
+      <div class="capa">
+        <div class="panel">
+          <h4>Daily general-inspection CAPA vs. spare volume</h4>
+          <div class="barrow">
+            <div class="bl"><span>Total center CAPA (daily)</span><span class="g-em">6,000 units/day</span></div>
+            <div class="track"><div class="fill" style="width:100%;background:var(--green)"></div></div>
+          </div>
+          <div class="barrow">
+            <div class="bl"><span>Current utilization 25% / remaining spare 75%</span><span class="o-em">Spare 4,500 units/day</span></div>
+            <div class="track"><div class="fill" style="width:25%;background:#9aa0a6"></div></div>
+            <div class="sub">Current load (1,500 units)</div>
+          </div>
+          <div class="barrow">
+            <div class="bl"><span>Concentrated inspection CAPA for stockpiled inventory</span><span>Normal 1,500 · Concentrated 3,000 units/day</span></div>
+            <div class="track"><div class="fill" style="width:50%;background:#33373b"></div></div>
+            <div class="sub">Up to 3,000 units/day during concentrated-response periods</div>
+          </div>
+        </div>
+        <div class="side">
+          <div class="sidebox green">
+            <h6>DAILY FREE CAPACITY</h6>
+            <p>Spare capacity ready to run the moment {{COMPANY}} volume is onboarded</p>
+            <div class="bignum">4,500 <small>units/day</small></div>
+          </div>
+          <div class="sidebox lgreen">
+            <h6>PEAK SEASON READINESS</h6>
+            <p>Expanded volume for concentrated peak-season/promotion response</p>
+            <div class="x">up to 1.5×</div>
+            <p style="text-align:right;font-size:12px;color:var(--orange)">Reserved CAPA · temporary lines · priority rules applied</p>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="ftbar"></div><div class="ftname">Returneeds</div><div class="pageno">03</div>
+  </section>
+
+  <!-- 8. Operational capacity - operating method -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">Operational Capacity<br>– Operating Method</h2></div>
+      <div class="lead">
+        <p><b>Inspection:</b> photography, component check, packaging-condition check, post-opening contamination/defect check, recording of pass/fail judgment results</p>
+        <p><b>Refurbishment/repackaging:</b> standard refurbishment (dust/hair removal, loose-thread trimming, light-stain wiping, refolding, poly-bag packaging) +
+        add-on services (tag/label attachment, tissue-paper/box replacement, steam de-wrinkling). <b class="g">Restored to a sellable condition per {{COMPANY}} standards</b>, with work items and packaging materials agreed in advance.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage">
+      <div class="g3" style="grid-template-columns:1fr 1fr 1fr;">
+        <div class="card">
+          <div class="tag g-em">01 · Precision inspection spec <span class="pill g" style="margin-left:6px">Starts on inbound</span></div>
+          <ul style="margin-top:10px">
+            <li><b>Photo records</b> — high-resolution 3-side photography, focused recording of major contamination/damage</li>
+            <li><b>Component check</b> — consistency check for missing set components/free gifts</li>
+            <li><b>Packaging and damage judgment</b> — opened-package damage analysis, real-time recording of pass/fail judgment in the system</li>
+          </ul>
+          <div class="foot"><span class="pill g">Uploaded to the Returneeds portal immediately upon judgment</span></div>
+        </div>
+        <div class="card">
+          <div class="tag o-em">02 · Standard refurbishment work <span class="pill o" style="margin-left:6px">Core of value restoration</span></div>
+          <ul style="margin-top:10px">
+            <li><b>Roll/contact cleaning</b> — precise removal of dust and hair</li>
+            <li><b>Loose-thread trimming</b> — fixing poor finishing and protruding threads</li>
+            <li><b>Fine solid-stain wiping</b> — precision cleaning of light stains such as cosmetics</li>
+            <li><b>{{COMPANY}} precision refolding</b> — folding per garment-specific guide standards</li>
+            <li><b>Standard poly-bag repackaging</b> — sealed packaging in dedicated clear poly bags</li>
+          </ul>
+          <div class="foot"><span class="pill o">Goal: restore to sellable, normal inventory</span></div>
+        </div>
+        <div class="card">
+          <div class="tag" style="color:#33373b">03 · Add-on reconditioning options <span class="pill" style="margin-left:6px">Applied after agreement</span></div>
+          <ul style="margin-top:10px">
+            <li><b>Tag/label replacement</b> — removing damaged tags and reprinting genuine-grade tags</li>
+            <li><b>Tissue-paper/packaging-box replacement</b> — replacing creased internal tissue paper, transferring out of damaged outer boxes</li>
+            <li><b>Fine de-wrinkling (steam)</b> — garment-specific hanger-type high-pressure steam pressing when fitting wrinkles occur</li>
+          </ul>
+          <div class="foot"><span class="pill">Applied per agreed standards after packaging materials are transferred</span></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="ftbar"></div><div class="ftname">Returneeds</div><div class="pageno">04</div>
+  </section>
+
+  <!-- 9. Overall inbound/outbound process -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">Inbound/Outbound and Logistics Operations<br>– Overall Process</h2></div>
+      <div class="lead">
+        <p>From the moment a return is filed on {{PLATFORM}} and other platforms through inventory return, we run a <b>one-stop outsourced operation</b>.</p>
+        <p>From pickup → inbound → precision inspection → refurbishment → return to the {{COMPANY}} center, we provide an <b class="g">end-to-end process with clear responsibility boundaries</b>.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage" style="bottom:46px">
+      <div class="steps">
+        <div class="step"><div class="bar" style="background:var(--green)"></div>
+          <div class="no">STEP 01 <span class="r">Auto-generated</span></div><h4>Return filing</h4>
+          <p>Automatic collection of customer orders, auto-synced via webhooks and the order API</p><div class="hl g-em">Targets delivered (T) orders</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="bar" style="background:var(--green)"></div>
+          <div class="no">STEP 02 <span class="r">Carrier integration</span></div><h4>Designated pickup integration</h4>
+          <p>Integrated with CJ Logistics, Hanjin, Korea Post, etc.; barcode-scanned inbound as soon as it arrives at the inspection center</p><div class="hl g-em">Assigned to the dedicated inspection team</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="bar" style="background:var(--orange)"></div>
+          <div class="no">STEP 03 <span class="r">Tailored inspection</span></div><h4>Precision inspection and photography</h4>
+          <p>High-resolution photography of front/back/damaged areas, pass/fail judgment and automatic registration of information</p><div class="hl o-em">Real-time upload to the Returneeds portal</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="bar" style="background:var(--orange)"></div>
+          <div class="no">STEP 04 <span class="r">Maximize product value</span></div><h4>Refurbishment and packaging</h4>
+          <p>Dust/hair removal and stain wiping, {{COMPANY}}-standard dedicated folding and precision repackaging</p><div class="hl">Tag/label replacement support</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="bar" style="background:#33373b"></div>
+          <div class="no">STEP 05 <span class="r">Inventory restock</span></div><h4>Return to {{COMPANY}} center</h4>
+          <p>After a 24-hour hold (for re-inspection), shipped via line-haul/freight to the {{COMPANY}}-designated logistics center</p><div class="hl">{{COMPANY}} center inbound convenience support</div></div>
+      </div>
+      <div class="miniftr">
+        <div class="mt">
+          <table>
+            <tr><th>Category</th><th>Existing returns handling</th><th style="color:var(--orange)">Returneeds coverage</th><th>Practical effect</th></tr>
+            <tr><td><b>Info sync</b></td><td>Manual collection and Excel upload</td><td class="o-em">Automatic collection via the {{PLATFORM}} API</td><td>Eliminates real-time omissions, easier order management</td></tr>
+            <tr><td><b>Inspection and judgment</b></td><td>Backlog and delays from being stacked in a corner of the warehouse</td><td class="o-em">Continuous inspection by the dedicated team</td><td>Inspection photos uploaded within 48 hours of inbound</td></tr>
+            <tr><td><b>Refurbishment work</b></td><td>More disposal/delays from unprocessed refurbishment</td><td class="o-em">Standard refurbishment + add-on work</td><td>Dramatic increase in the recovery rate of sellable inventory</td></tr>
+          </table>
+        </div>
+      </div>
+    </div></div>
+    <div class="srcfoot">Case: Minasu, Team Lead Kim Hyun-jun — "Returns that used to take a week, we now finish in three days."</div>
+    <div class="pageno">05</div>
+  </section>
+
+  <!-- 10. Shipping cost policy / storage -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">Inbound/Outbound and Logistics Operations<br>– Shipping Cost Policy · Storage</h2></div>
+      <div class="lead">
+        <p>By combining the pickup leg and the return-transit leg into the freight cost, you can <b>compare against your existing courier costs</b>.</p>
+        <p>We present freight transparently, <b class="g">separating per-unit work fee · transport fee · packaging materials · storage fee · exception-work fee</b>.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage">
+      <div class="flow">
+        <div class="fbox">Buyer<br><span style="font-size:12px;font-weight:600;color:var(--gray)">B2C return pickup</span></div>
+        <div class="farr">─pickup→</div>
+        <div class="fbox g">Precision inspection<br><span style="font-size:12px;font-weight:600;color:var(--gray)">3-side photos on inbound</span></div>
+        <div class="farr">→</div>
+        <div class="fbox o">Re-inspection grace storage<br><span style="font-size:12px;font-weight:600;color:var(--gray)">24 hours after inspection</span></div>
+        <div class="farr">→</div>
+        <div class="fbox y">Free storage<br><span style="font-size:12px;font-weight:600;color:var(--gray)">up to 6 days</span></div>
+        <div class="farr">─line-haul→</div>
+        <div class="fbox gf">{{COMPANY_EN}}<br><span style="font-size:12px;font-weight:600;color:#dff3e4">Warehouse</span></div>
+      </div>
+      <div style="text-align:center;font-size:15px;font-weight:700;padding:6px 0 4px;color:var(--ink-2)">
+        Basic freight settlement structure &nbsp; <b>Freight (per order) = <span class="g-em">pickup fee</span> + <span class="o-em">transit transport fee</span></b>
+      </div>
+      <div class="infocols">
+        <div class="infocol">
+          <h5>SHIPPING SPECIFICATIONS</h5><h4>Transit and outbound operational policy</h4>
+          <ul>
+            <li>Outbound days and line-haul shipping addresses are custom-set to {{COMPANY}} operations team requests</li>
+            <li>Transport mode: choose among standard courier, line-haul freight, garment-only hanger vehicle, or express quick — agreed by discussion</li>
+            <li>All inbound/outbound history is tracked via electronic packing-list transmission</li>
+          </ul>
+        </div>
+        <div class="infocol">
+          <h5>PACKAGING OPTIONS</h5><h4>Dedicated packaging-materials policy</h4>
+          <ul>
+            <li>4 Returneeds dedicated box sizes + {{COMPANY}} brand-dedicated boxes available</li>
+            <li>Quantities to transfer and stacking locations are agreed in advance against the inbound schedule</li>
+            <li>Dedicated processing requirements such as tissue-paper replacement and brand-sticker attachment can be implemented</li>
+          </ul>
+        </div>
+      </div>
+    </div></div>
+    <div class="ftbar"></div><div class="ftname">Returneeds</div><div class="pageno">06</div>
+  </section>
+
+  <!-- 11. Product management method Style vs SKU -->
+  <!-- ▼ GEN:style_sku — The comparison table is a fixed asset. Fill only the lead (STYLE_SKU_LEAD) and recommendation note (STYLE_SKU_NOTE) per company.
+       If the customer raised concerns about SKU-level handling, quote that remark; otherwise use a general tone. If the customer never raised SKU issues at all, this slide may be omitted -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">Product Management Method<br>Style vs SKU</h2></div>
+      <div class="lead">
+        <p>{{STYLE_SKU_LEAD}}</p>
+        <p>We have extensive experience with PDA-based style sorting and packaging built on our own IT DAS.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage" style="background:#fff;">
+      <div style="padding:14px 30px 0;font-size:18px;font-weight:800;">📊 Style vs SKU return-method dimensional comparison</div>
+      <div style="padding:14px 30px;">
+        <table class="tbl">
+          <tr><th>Comparison item</th><th>Style-based return</th><th class="alt">Style + size return</th><th class="alt">SKU-detailed return</th></tr>
+          <tr><td class="lab">Feasible from</td><td class="g-em">Immediately applicable</td><td class="g-em">Immediately applicable</td><td class="o-em">Possible after robotic sorter is introduced</td></tr>
+          <tr><td class="lab">Inventory accuracy</td><td>Style-separated stacking</td><td>Style × size consistency matching</td><td>Precise separation by single color/size</td></tr>
+          <tr><td class="lab">Boxes shipped</td><td class="g-em">Fewer boxes via large-box stacking</td><td>Maintains appropriate packaging volume</td><td class="o-em">More boxes from small-quantity, many-variety sorting</td></tr>
+          <tr><td class="lab">Transport cost efficiency</td><td class="g-em">Maximum freight savings from fewer boxes</td><td>Resolves transport and work delays</td><td class="o-em">Requires control of stacking inefficiency</td></tr>
+          <tr><td class="lab">Logistics complexity</td><td>Moderate (PDA real-time linked control)</td><td>Moderate (PDA real-time linked control)</td><td>Additionally requires robotic sorting and dedicated bagging</td></tr>
+        </table>
+      </div>
+      <div class="note">{{STYLE_SKU_NOTE}}</div>
+    </div></div>
+    <div class="pageno">07</div>
+  </section>
+  <!-- ▲ GEN:style_sku -->
+
+  <!-- 12. {{PLATFORM}} integration -->
+  <!-- ▼ GEN:platform — The {{PLATFORM}} token is globally substituted. If the customer's platform is not CAFE24, adjust details like webhooks/Naver Pay to fit the platform.
+       If the customer never asked about integration, this slide may be reduced/omitted -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">{{PLATFORM}} Integration</h2></div>
+      <div class="lead">
+        <p>We provide automatic order collection on {{PLATFORM}} and Korea's leading commerce platforms.</p>
+        <p>We don't force full integration from the start. We propose phased integration that controls development risk in the order <b class="g">no/light integration → status values → photos/inspection results</b>.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage" style="background:#fff;">
+      <div style="padding:18px 30px 0;font-size:17px;font-weight:800;">📡 System integration spec and order-generation filtering</div>
+      <div style="display:grid;grid-template-columns:1.3fr .9fr;gap:24px;padding:18px 30px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:14px;justify-content:center;margin-bottom:16px;">
+            <div style="background:var(--green-l);border-radius:8px;padding:14px 20px;text-align:center;"><b style="color:var(--green-d)">{{PLATFORM}} store</b><br><span style="font-size:12px;color:var(--gray)">Detects return/exchange filing webhook</span></div>
+            <span class="farr">→</span>
+            <div style="font-weight:800;color:var(--green)">API order lookup</div>
+            <span class="farr">→</span>
+            <div style="background:var(--orange-l);border-radius:8px;padding:14px 20px;text-align:center;"><b style="color:#c4561a">Returneeds system</b><br><span style="font-size:12px;color:var(--gray)">Auto-generates return orders in real time</span></div>
+          </div>
+          <table class="tbl">
+            <tr><th>Category</th><th>Included in integration</th><th class="alt">Excluded from integration</th></tr>
+            <tr><td class="lab">Delivery status</td><td class="g-em">Orders in transit or delivered</td><td>Pre-delivery and cancellation-complete states</td></tr>
+            <tr><td class="lab">Payment method</td><td class="g-em">All standard PG payment methods</td><td>Naver Pay (NCHECKOUT) orders</td></tr>
+            <tr><td class="lab">Status sync</td><td class="g-em">{{PLATFORM}} → Returneeds integration</td><td>Returneeds → {{PLATFORM}} reverse transmission</td></tr>
+          </table>
+        </div>
+        <div style="background:var(--green-l);border-radius:10px;padding:22px;">
+          <h6 style="font-size:11px;font-weight:800;color:var(--green-d);letter-spacing:.6px;margin-bottom:14px;">PORTAL FUNCTIONALITY</h6>
+          <div style="font-size:16px;font-weight:800;margin-bottom:14px;">Returneeds dedicated-system feature scope</div>
+          <ul style="list-style:none;">
+            <li class="cf">Real-time return progress monitoring (including pickup/delivery status)</li>
+            <li class="cf">Precise pass/fail judgment and inspection-result lookup by reason</li>
+            <li class="cf">High-resolution multi-angle inspection image lookup of contamination/damage locations</li>
+            <li class="cf">'Re-file return order' function for resolving work mismatches</li>
+            <li class="cf">Comment-based Q&A between partner admins and dedicated inspectors</li>
+          </ul>
+        </div>
+      </div>
+      <div style="margin:0 30px;background:var(--orange-l);border-left:4px solid var(--orange);border-radius:6px;padding:12px 18px;font-size:13.5px;color:var(--ink-2);line-height:1.55;">
+        📌 <b>Inspection results and photo integration notice</b> — Inspection results and photos can be controlled through the <b>Returneeds dedicated web service</b>.
+        If transmitting inspection information/photos into {{PLATFORM}} is needed in the future, we will scope and build it through separate system-development discussions.
+      </div>
+    </div></div>
+    <style>.cf{font-size:14px;line-height:1.55;color:var(--green-d);padding-left:18px;position:relative;margin-bottom:6px;}.cf:before{content:"✔";position:absolute;left:0;font-size:11px;top:2px;}</style>
+    <div class="pageno">08</div>
+  </section>
+  <!-- ▲ GEN:platform -->
+
+  <!-- 13. Value by decision maker -->
+  <!-- ▼ GEN:kpi — Reconstruct rows from STORYLINE SPEC.KPI_ROWS. Departments and KPIs of interest come from the decision-maker map; messages from the persuasion logic for that department.
+       The 7 rows below are Returneeds standard defaults (general) — add/edit per company analysis but keep the structure/classes -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">Value Alignment by Department<br>(Translated into KPI Language)</h2></div>
+      <div class="lead">
+        <p>Practitioners ask about operational items, but approvers want a KPI translation. This proposal re-translates operational metrics into KPI language as <b>inspection TAT → refund lead time → CS re-inquiry rate → repurchase defense</b>.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage" style="background:#fff;">
+      <div style="padding:16px 30px;">
+        <table class="tbl dm-tbl">
+          <tr><th>Department</th><th>KPI of interest</th><th class="alt" style="width:42%">Returneeds proposal message</th></tr>
+          {{KPI_ROWS}}
+        </table>
+      </div>
+    </div></div>
+    <div class="pageno">09</div>
+  </section>
+  <!-- ▲ GEN:kpi -->
+
+  <!-- 14. Phased pilot proposal / roadmap -->
+  <!-- ▼ GEN:roadmap — The 3 stages (road-top) and Gantt are Returneeds's standard 8-week default. Adjust durations/target categories to the company pilot scope.
+       Fill ROADMAP_NOTE with data needed for confirmation + follow-up expansion items (per company) -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2 class="g">Phased Pilot<br>Execution Roadmap</h2></div>
+      <div class="lead">
+        <p>Rather than full outsourcing/full integration, a <b>narrow-scope, non-conflicting with the existing 3PL, results-proving</b> pilot is more favorable for approval at mid/large enterprises.</p>
+        <p>Targeting B2C returns in the top 1–2 general-apparel categories, we first prove the effect by bundling <b class="g">pickup→inspection→refurbishment→photo evidence→status values→inventory return</b>.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage">
+      <div class="road">
+        <div class="road-top">
+          {{ROADMAP_TOP}}
+        </div>
+        <div class="gantt">
+          <div></div><div class="scale"><span>Wk 1</span><span>Wk 2</span><span>Wk 3</span><span>Wk 4</span><span>Wk 5</span><span>Wk 6</span><span>Wk 7</span><span>Wk 8</span></div>
+          <div class="glab">Standard alignment</div><div class="gbar" style="grid-column:2 / span 2;background:var(--green)">Agree on standards/codes</div>
+          <div class="glab">Pilot inspection</div><div class="gbar" style="grid-column:4 / span 3;background:var(--orange)">Inspection/refurbishment (double inspection)</div>
+          <div class="glab">CS lookup applied</div><div class="gbar" style="grid-column:5 / span 3;background:var(--amber)">Portal photo/status-value CS linkage</div>
+          <div class="glab">Validation/report</div><div class="gbar" style="grid-column:8 / span 1;background:var(--green-d)">SLA validation</div>
+        </div>
+        <div class="note" style="padding-top:18px;">{{ROADMAP_NOTE}}</div>
+      </div>
+    </div></div>
+    <div class="pageno">10</div>
+  </section>
+  <!-- ▲ GEN:roadmap -->
+
+  <!-- 15. Additional items to confirm -->
+  <!-- ▼ GEN:checklist — STORYLINE SPEC.CHECKLIST 6 items. Below are general defaults — replace per the company's 'additional items to confirm' -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2>Items We Need<br>Confirmed to Proceed</h2></div>
+      <div class="lead">
+        <p>To finalize the pilot scope, SLA, and pricing, we request that you share the data and standards for the items below.</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage" style="background:transparent;">
+      <div class="checks">
+        {{CHECKLIST_ITEMS}}
+      </div>
+    </div></div>
+    <div class="pageno">11</div>
+  </section>
+  <!-- ▲ GEN:checklist —— Slides 16–23 below are the verified service deck (LIB); do not edit except for the company-name token -->
+
+  <!-- 16. DIVIDER service deck -->
+  <section class="slide cover">
+    <div class="ct" style="flex-direction:column;height:100%;">
+      <div style="text-align:center;">
+        <div style="font-size:64px;font-weight:800;letter-spacing:-2px;">↻R</div>
+        <div style="font-size:15px;margin-top:8px;">When you <b>need to return</b></div>
+        <div style="font-size:54px;font-weight:800;margin-top:6px;">Returneeds</div>
+        <div style="font-size:16px;opacity:.85;margin-top:30px;">Service Overview</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 17. A new standard for returns care -->
+  <section class="slide">
+    <div class="pad" style="display:flex;gap:40px;height:100%;align-items:center;">
+      <div style="flex:1;">
+        <h2 style="font-size:34px;font-weight:800;line-height:1.35;">A New Standard<br>for Returns Care</h2>
+        <div style="width:140px;height:3px;background:#222;margin:24px 0;"></div>
+        <h2 style="font-size:30px;font-weight:800;color:var(--green);line-height:1.35;">The Complete Returns Solution<br>That Protects Brand Value</h2>
+        <p style="font-size:16px;color:var(--ink-2);line-height:1.8;margin-top:30px;">
+          From return pickup to inspection and refurbishment,<br>'accurately, quickly, and from the shipper's point of view'</p>
+        <p style="font-size:16px;color:var(--ink-2);line-height:1.8;margin-top:18px;">
+          With the Returneeds solution designed around customer experience,<br>you can manage returns while protecting brand value.</p>
+      </div>
+      <div style="flex:1;background:linear-gradient(135deg,#2b2f33,#4a4f54);border-radius:12px;height:560px;display:flex;align-items:center;justify-content:center;color:#7a8088;font-size:15px;">
+        Inspection center view
+      </div>
+    </div>
+  </section>
+
+  <!-- 18. Easy returns over fast delivery -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2>An Era That Seeks<br>Easy Returns Over Fast Delivery</h2></div>
+      <div class="lead"><p>Today the customer's choice hinges on <b class="g">'easy returns'</b> more than 'fast delivery'.</p></div>
+    </div>
+    <div class="body"><div class="stage" style="background:transparent;">
+      <div class="g2" style="grid-template-columns:1fr 1fr;align-items:center;">
+        <div style="padding:10px 20px;">
+          <p style="font-size:15px;color:var(--ink-2);line-height:1.9;margin-bottom:18px;">
+            · Returns-logistics satisfaction decisively affects new-customer acquisition and existing-customer repurchase<br>
+            · Exchange/return/refund convenience ranked 1st at <b class="o">35.1%</b> across 6 dimensions of delivery satisfaction<br>
+            · <b class="g">Free returns/exchanges</b> are preferred over same-day delivery</p>
+          <table class="tbl" style="font-size:13px;">
+            <tr><th>Category</th><th>Preference</th></tr>
+            <tr><td class="lab" style="background:var(--orange-l);color:#c4561a">Exchange/return/refund convenience</td><td class="o-em">35.1%</td></tr>
+            <tr><td>Cost</td><td>13.0%</td></tr>
+            <tr><td>Item condition</td><td>12.8%</td></tr>
+            <tr><td>Information/notifications</td><td>11.4%</td></tr>
+          </table>
+        </div>
+        <div style="padding:10px 20px;">
+          <table class="tbl" style="font-size:13px;">
+            <tr><th>Category</th><th>Preference</th></tr>
+            <tr><td class="lab">Free shipping</td><td>79%</td></tr>
+            <tr><td class="lab" style="background:var(--green-l);color:var(--green-d)">Free returns/exchanges</td><td class="g-em">54%</td></tr>
+            <tr><td>Same-day delivery</td><td>42%</td></tr>
+            <tr><td>Next-day delivery</td><td>40%</td></tr>
+          </table>
+          <div style="background:#fff;border-radius:10px;padding:20px;margin-top:18px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+            <div style="font-size:24px;font-weight:800;color:#222;">"The age of returns"</div>
+            <p style="font-size:14px;color:var(--ink-2);line-height:1.7;margin-top:10px;">
+              "Figuring I'd just pick both, I ordered impulsively, and <b>returned the items I didn't use.</b>"<br>
+              As a perk, return shipping is '0 KRW' for 30 days.</p>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="srcfoot">Sources: Jang Yeon-nyeong (2017), Chung-Ang University master's thesis / Consumer Insight · Hanyang University Distribution Research Center / "Consumer Preference Survey by Delivery Policy" Walker Sands, 2018 / "The Age of Returns" allure, 2023.2.2</div>
+    <div class="pageno">03</div>
+  </section>
+
+  <!-- 19. E-commerce difficulties -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2>The Returns-Operations Challenges<br>E-commerce Brands Face</h2></div>
+      <div class="lead"><p>From platforms' 'demands for fast return processing' and 'everything from delayed customer CS to dealing with bad-faith consumers',
+        e-commerce brands face a range of return issues due to insufficient return-condition information.</p></div>
+    </div>
+    <div class="body"><div class="stage" style="background:transparent;">
+      <div class="pains">
+        <div class="pain">
+          <div class="bubble">"If inspection isn't confirmed by today,<br>an automatic refund will be processed."</div>
+          <div class="emoji">😐</div>
+          <div style="font-size:14px;color:var(--ink-2);margin-bottom:10px;">The host platform's</div>
+          <div class="badge">Demand for fast return processing</div>
+        </div>
+        <div class="pain">
+          <div class="bubble">"It'd be better if there were<br>inspection photos showing<br>the return's condition…"</div>
+          <div class="emoji">🤢</div>
+          <div style="font-size:14px;color:var(--ink-2);margin-bottom:10px;">From a lack of return-condition information,</div>
+          <div class="badge">Delayed customer CS response</div>
+        </div>
+        <div class="pain">
+          <div class="bubble">"It's not my fault.<br>Do you have proof?<br>Just refund me now..!"</div>
+          <div class="emoji">😡</div>
+          <div style="font-size:14px;color:var(--ink-2);margin-bottom:10px;">With no evidence on hand,</div>
+          <div class="badge">Difficulty handling bad-faith consumers</div>
+        </div>
+      </div>
+    </div></div>
+    <div class="ftbar"></div><div class="ftname">Returneeds</div><div class="pageno">04</div>
+  </section>
+
+  <!-- 20. Customers -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2>The Fashion Industry's<br>First Choice, Returneeds</h2></div>
+      <div class="lead"><p>Returneeds works with clients ranging from MUSINSA TOP20 brands to premium brands stocked in French boutiques.
+        <b>No personal devices allowed in the work area, full-coverage CCTV with continuous recording, and security signature management</b> — we provide a trustworthy security framework.</p></div>
+    </div>
+    <div class="body"><div class="stage" style="background:transparent;">
+      <div class="clients">
+        <div class="clogo"><b>ESPIONAGE</b><span>Espionage</span></div>
+        <div class="clogo"><b>KIJUN</b><span>Kijun</span></div>
+        <div class="clogo"><b>JOORTI</b><span>Joorti</span></div>
+        <div class="clogo"><b>Amour moier</b><span>Amour Moier</span></div>
+        <div class="clogo"><b>Y-JACK</b><span>Y-Jack</span></div>
+        <div class="clogo"><b>MOIR SEOUL</b><span>Moir Seoul</span></div>
+        <div class="clogo"><b>EENK</b><span>Eenk</span></div>
+        <div class="clogo"><b>AKIII CLASSIC</b><span>Akiii Classic</span></div>
+        <div class="clogo"><b>BRONSON</b><span>Bronson</span></div>
+        <div class="clogo"><b>1993STUDIO</b><span>1993 Studio</span></div>
+        <div class="clogo"><b>FIDODIDO</b><span>Fidodido</span></div>
+        <div class="clogo"><b>PARITY</b><span>Parity</span></div>
+        <div class="clogo"><b>SNOW PEAK</b><span>Snow Peak</span></div>
+        <div class="clogo"><b>BORNTOWIN</b><span>Borntowin</span></div>
+      </div>
+    </div></div>
+    <div class="pageno">06</div>
+  </section>
+
+  <!-- 21. Before / After -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2>How a Single Day Changes<br>Your CS Responsiveness</h2></div>
+      <div class="lead"><p>Returns processed on average within 1 business day of inbound, real-time return photos and condition information,
+        and clear records of customer-liability reasons make <b>CS response and bad-faith-consumer defense easier</b>.</p></div>
+    </div>
+    <div class="body"><div class="stage" style="background:transparent;padding:0;">
+      <div class="ba">
+        <div class="row before">
+          <div class="rl">Before<small>Before adopting the partner</small></div>
+          <div class="cell"><span class="em">😐</span>The host platform's<br><b>demand for fast return processing</b></div>
+          <div class="cell"><span class="em">🤢</span>From a lack of condition info,<br><b>delayed customer CS response</b></div>
+          <div class="cell"><span class="em">😡</span>With no evidence,<br><b>difficulty handling bad-faith consumers</b></div>
+        </div>
+        <div class="row after">
+          <div class="rl">After<small style="color:var(--orange)">*Favorable for brand-reputation management</small></div>
+          <div class="cell"><span class="em">😮</span>On average within 1 business day of inbound,<br><b class="g-em">returns processing complete</b></div>
+          <div class="cell"><span class="em">🥳</span>With real-time photo/condition info,<br><b class="g-em">fast CS response</b></div>
+          <div class="cell"><span class="em">🙏</span>By collecting customer-liability reasons,<br><b class="g-em">accurate handling of bad-faith consumers</b></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="pageno">07</div>
+  </section>
+
+  <!-- 22. Inspection center / security -->
+  <section class="slide">
+    <div class="pad head">
+      <div class="title"><div class="rule"></div><h2>An Inspection Center · Security<br>Optimized for Returns Logistics</h2></div>
+      <div class="lead">
+        <p>Facilities and a center layout specialized for returns enable fast, efficient work.</p>
+        <p><b>[Features]</b> 2K+ high-resolution photography equipment · fast detailed defect checks · AI-assisted defect detection for faster, more accurate inspection</p>
+      </div>
+    </div>
+    <div class="body"><div class="stage" style="background:transparent;">
+      <div class="split">
+        <div class="news">
+          <div class="ntag">Major media coverage</div>
+          <div class="newsitem"><span class="src">[KL News] 2025.12.23</span><br><b>Returnall wins Minister's Award at DATA-Stars… 'returns-logistics innovation'</b></div>
+          <div class="newsitem"><span class="src">[Ddaily News24] 2025.12.19</span><br><b>Daejeon Innovation Center portfolio company Returnall ranks 1st in DataStars final evaluation</b></div>
+          <div class="newsitem"><span class="src">[Nate News] 2026.01.23</span><br><b>New life for returns headed for disposal… 'Returneeds' in the spotlight</b></div>
+        </div>
+        <div class="sec">
+          <div class="stag">Security framework</div>
+          <div class="secitem"><div class="n">1</div><b>No personal devices in the work area</b></div>
+          <div class="secitem"><div class="n">2</div><b>24-hour CCTV recording across all zones</b></div>
+          <div class="secitem"><div class="n">3</div><b>Security-compliance signature for center visitors</b></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="ftbar"></div><div class="ftname">Returneeds</div><div class="pageno">11</div>
+  </section>
+
+  <!-- 23. CLOSING -->
+  <section class="slide closing">
+    <div class="cc"><h2>Solve Every Returns Problem at Once<br>with Returneeds.</h2></div>
+    <div class="contact">
+      <div><b>Website</b> returneeds.com</div>
+      <div><b>Inquiries</b> sales@returnall.kr</div>
+    </div>
+    <div class="rn">↻ Returneeds</div>
+  </section>
+
+</div>
+</body>
+</html>

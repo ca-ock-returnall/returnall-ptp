@@ -1,6 +1,7 @@
 // 경로·환경설정. 저장소 루트의 기존 자산(pipeline/, content-library/, rawdata/)을 그대로 읽는다.
 import fs from "node:fs";
 import path from "node:path";
+import type { Lang } from "./i18n";
 
 function findRoot(): string {
   let dir = process.cwd();
@@ -17,6 +18,7 @@ export const ROOT = findRoot();
 export const PIPELINE_DIR = path.join(ROOT, "pipeline");
 export const CONTENT_DIR = path.join(ROOT, "content-library");
 export const TEMPLATE_PATH = path.join(CONTENT_DIR, "proposal-template.html");
+export const TEMPLATE_PATH_EN = path.join(CONTENT_DIR, "proposal-template.en.html");
 export const RAWDATA_DIR = path.join(ROOT, "rawdata");
 export const OUTPUT_DIR = path.join(ROOT, "output");
 
@@ -29,6 +31,8 @@ export function loadStagePrompt(name: string): string {
   return fs.readFileSync(path.join(PIPELINE_DIR, name), "utf-8");
 }
 
-export function loadTemplate(): string {
+export function loadTemplate(lang: Lang = "ko"): string {
+  // 영어 템플릿이 없으면 한국어 템플릿으로 폴백(누락 시에도 조립은 동작).
+  if (lang === "en" && fs.existsSync(TEMPLATE_PATH_EN)) return fs.readFileSync(TEMPLATE_PATH_EN, "utf-8");
   return fs.readFileSync(TEMPLATE_PATH, "utf-8");
 }

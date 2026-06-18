@@ -2,6 +2,7 @@
 // content-library/proposal-template.html 의 {{TOKEN}} 을 결정론적으로 치환한다.
 // LIB(검증 자산) 슬라이드는 회사명/플랫폼 토큰 외에는 손대지 않는다.
 import { loadTemplate } from "./config";
+import type { Lang } from "./i18n";
 import type { StorylineSpec } from "./schema";
 
 // 텍스트 토큰 이스케이프(& < > 만). message 필드의 <b> 강조는 의도적으로 허용한다.
@@ -33,8 +34,8 @@ function checklist(spec: StorylineSpec): string {
     .join("\n        ");
 }
 
-export function assemble(spec: StorylineSpec): string {
-  let html = loadTemplate();
+export function assemble(spec: StorylineSpec, lang: Lang = "ko"): string {
+  let html = loadTemplate(lang);
   const c = spec.cards;
   const tokens: Record<string, string> = {
     PROPOSAL_TITLE: esc(spec.proposal_title),

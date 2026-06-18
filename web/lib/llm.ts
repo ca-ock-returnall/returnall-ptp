@@ -3,6 +3,7 @@
 // 공개자료 '검색'은 자체 검색봇(searchbot.ts)이 수행하고, Claude는 수집 자료로 문서를 '작성'만 한다.
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { type Lang, PIPELINE } from "./i18n";
 import { StorylineSpecSchema, type StorylineSpec } from "./schema";
 
 export type LlmCtx = { client: Anthropic; model: string; effort: string };
@@ -46,7 +47,13 @@ export async function streamText(
   return full.trim();
 }
 
-export async function parseStoryline(ctx: LlmCtx, system: string, user: string, maxTokens = 16000): Promise<StorylineSpec> {
+export async function parseStoryline(
+  ctx: LlmCtx,
+  system: string,
+  user: string,
+  maxTokens = 16000,
+  lang: Lang = "ko",
+): Promise<StorylineSpec> {
   const resp = await ctx.client.messages.parse({
     model: ctx.model,
     max_tokens: maxTokens,
@@ -55,7 +62,7 @@ export async function parseStoryline(ctx: LlmCtx, system: string, user: string, 
     output_config: { format: zodOutputFormat(StorylineSpecSchema), effort: ctx.effort },
   } as any);
   const parsed = (resp as any).parsed_output as StorylineSpec | null;
-  if (!parsed) throw new Error(`스토리라인 사양 구조화 실패 (stop_reason=${(resp as any).stop_reason})`);
+  if (!parsed) throw new Error(PIPELINE[lang].specFail(String((resp as any).stop_reason)));
   return parsed;
 }
 
